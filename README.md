@@ -1,39 +1,190 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Cesium
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+A lightweight Flutter state management library built around `Listenable`, `ChangeNotifier`, and `ValueNotifier` to complement the Flutter ecosystem without replacing it.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+Cesium gives you small, composable building blocks for async loading states, derived values, HTTP-backed resources, and service registration so you can keep your app logic simple and reactive.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- `FutureResource<T>` for loading, success, and error states with a `ValueNotifier`
+- `HttpResource<T>` for simple HTTP-backed data sources with debounce and dependency reloading
+- `PaginatedHttpResource<T>` for paged results and list pagination patterns
+- `ComputedResource<T>` for derived values that automatically recompute when dependencies change
+- `CesiumService` base type plus registration helpers for dependency injection
+- `ManagedListenerMixin` to make listener cleanup easier in stateful widgets
+- Fluent listenable extensions for building widgets directly from resources and notifiers
+- Centralized error handling via `Cesium.logError()` and `Cesium.setErrorHandler()`
+
+## Installation
+
+Add this to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  cesium: ^1.0.0
+```
+
+Then import it in your Dart code:
+
+```dart
+import 'package:cesium/cesium.dart';
+```
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Cesium is designed to be used alongside standard Flutter widgets and state patterns. It does not replace `State`, `ChangeNotifier`, or `ValueNotifier`; instead, it adds useful wrappers around them for common app needs.
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+### 1. Loading state with `FutureResource`
 
 ```dart
-const like = 'sample';
+import 'package:cesium/cesium.dart';
+import 'package:flutter/material.dart';
+
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late final FutureResource<Map<String, dynamic>> profile;
+
+  @override
+  void initState() {
+    super.initState();
+    profile = FutureResource(() => fetchProfile());
+  }
+
+  Future<Map<String, dynamic>> fetchProfile() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return {'name': 'Ada Lovelace'};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return profile.pipe(
+      loading: (_) => const Center(child: CircularProgressIndicator()),
+      error: (_, error) => Center(child: Text('Error: $error')),
+      value: (context, data) => Center(child: Text(data['name'])),
+    );
+  }
+
+  @override
+  void dispose() {
+    profile.dispose();
+    super.dispose();
+  }
+}
 ```
+
+### 2. Derived values with `ComputedResource`
+
+```dart
+final items = ValueNotifier<List<String>>(['alpha', 'beta', 'gamma']);
+
+final filteredItems = ComputedResource(
+  () => items.value.where((item) => item.startsWith('a')).toList(),
+  [items],
+);
+
+final widget = filteredItems.pipe((context, value) {
+  return Text(value.join(', '));
+});
+```
+
+When `items` changes, `filteredItems` recalculates automatically.
+
+### 3. HTTP resources with `HttpResource`
+
+```dart
+final posts = HttpResource<List<Post>>(
+  () => 'https://jsonplaceholder.typicode.com/posts',
+  (json) => (json as List)
+      .map((item) => Post.fromJson(item as Map<String, dynamic>))
+      .toList(),
+  debounceDuration: const Duration(milliseconds: 250),
+);
+
+final page = posts.pipe(
+  loading: (_) => const CircularProgressIndicator(),
+  error: (_, error) => Text('Failed to load posts: $error'),
+  value: (context, list) => ListView.builder(
+    itemCount: list.length,
+    itemBuilder: (_, index) => Text(list[index].title),
+  ),
+);
+```
+
+### 4. Paginated resources
+
+```dart
+final comments = PaginatedHttpResource<Comment>(
+  (page) => 'https://example.com/comments?page=$page',
+  (json) => Comment.fromJson(json),
+  page: 1,
+  getMaxPages: (comment) => 5,
+);
+
+comments.loadMore();
+```
+
+### 5. Services and dependency injection
+
+```dart
+class AuthService extends CesiumService {
+  bool loggedIn = false;
+
+  @override
+  void reset() {
+    loggedIn = false;
+    notifyListeners();
+  }
+}
+
+void main() {
+  register<AuthService>(() => AuthService());
+  final auth = injectService<AuthService>();
+}
+```
+
+### 6. Widget piping helpers
+
+```dart
+final notifier = ValueNotifier<String>('hello');
+
+final widget = notifier.pipe(
+  (context, value) => Text(value),
+);
+```
+
+The library also includes `pipeChild` helpers for reusing a static child widget while only rebuilding the dynamic portion of the UI.
+
+## Error handling
+
+You can set a global error handler:
+
+```dart
+Cesium.setErrorHandler((error) {
+  debugPrint('Cesium error: $error');
+});
+```
+
+This is used by the async resource types when a request or computation fails, and it can also be triggered manually via `Cesium.logError(error)`.
+
+## Why Cesium?
+
+Cesium is a small, pragmatic toolkit for Flutter apps that want:
+
+- clearer async UI states
+- a lightweight alternative to larger state management frameworks
+- minimal boilerplate for derived values and remote resources
+- easy integration with standard Flutter `Listenable` patterns
 
 ## Additional information
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+- Repository: see the package source and tests in this workspace for the current implementation.
+- Issues and feedback: open an issue in the package repository if available.
+- Contributions are welcome for improvements, bug fixes, and additional helpers that fit the library's lightweight philosophy.
