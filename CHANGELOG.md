@@ -13,4 +13,12 @@ Initial release with the following features:
 
 ## 1.0.1
 
-* Added a `NOTICE` file for dependency license attribution (`async`, `dio`, `Flutter`).
+- Added a `NOTICE` file for dependency license attribution (`async`, `dio`, `Flutter`).
+
+## 1.1.0
+
+- Added a centralized `CesiumHttpService` with HTTP helpers and reset support for cleaner dependency injection and testing.
+- Introduced a shared `HttpResourceBase` to consolidate request execution, debounce handling, dependency reloading, and progress tracking.
+- Updated `HttpResource` and `PaginatedHttpResource` to use the new base flow while preserving pagination behavior and result accumulation.
+- Expanded the service management API with override/reset patterns to support testing and configuration flexibility.
+- Added focused coverage for initial loads, errors, dependency-triggered refreshes, and paginated requests.

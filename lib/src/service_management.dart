@@ -7,6 +7,13 @@ void register<T extends CesiumService>(T Function() factory) {
   _factories[T] = factory;
 }
 
+void registerOverride<T extends CesiumService>(T Function() factory) {
+  _factories[T] = factory;
+  if (_services.containsKey(T)) {
+    _services[T] = _factories[T]!();
+  }
+}
+
 T injectService<T extends CesiumService>() {
   if (_services.containsKey(T)) {
     return _services[T]! as T;
@@ -34,5 +41,36 @@ void resetService<T extends CesiumService>() {
 void resetServices() {
   for (var instance in _services.values) {
     instance.reset();
+  }
+}
+
+class ServiceProvider<T extends CesiumService> {
+  bool _registeredOverride = false;
+  bool get registeredOverride => _registeredOverride;
+  ServiceProvider(T Function() factory) {
+    register<T>(factory);
+  }
+
+  ServiceProvider.withOverride(
+    T Function() factory,
+    T Function() overrideFactory,
+  ) {
+    register<T>(factory);
+    registerOverride(overrideFactory);
+    _registeredOverride = true;
+  }
+
+  void override(T Function() overrideFactory) {
+    if (_registeredOverride) return;
+    registerOverride<T>(overrideFactory);
+    _registeredOverride = true;
+  }
+
+  T inject() {
+    return injectService<T>();
+  }
+
+  void reset() {
+    resetService<T>();
   }
 }

@@ -7,3 +7,4 @@ export './src/computed_resource.dart';
 export './src/cesium_service.dart';
 export './src/error_logger.dart';
 export './src/managed_listener_mixin.dart';
+export './src/cesium_http_service.dart';
