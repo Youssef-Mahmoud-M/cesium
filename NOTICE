@@ -1,0 +1,19 @@
+This package incorporates open-source software under the following licenses:
+
+--------------------------------------------------------------------------------
+
+async package (https://pub.dev/packages/async)
+Copyright 2015, the Dart project authors. All rights reserved. 
+Use of this source code is governed by a BSD-3-clause license.
+
+--------------------------------------------------------------------------------
+
+dio package (https://pub.dev/packages/dio)
+Copyright (c) 2018 dart-dio. All rights reserved. 
+Use of this source code is governed by the MIT license.
+
+--------------------------------------------------------------------------------
+
+Flutter framework (https://flutter.dev)
+Copyright 2014 The Flutter Authors. All rights reserved.
+Use of this source code is governed by a BSD-3-clause license.
