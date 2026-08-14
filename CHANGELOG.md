@@ -10,3 +10,7 @@ Initial release with the following features:
 - Extensions for `Listenable` and `ValueNotifier` to simplify UI code.
 - `ManagedListenerMixin`: a mixin for `StatefulWidget` that automatically removes added listeners during `dispose()`.
 - Error logging: a centralized `Cesium` error API. Report errors with `Cesium.logError(error)` and register a handler with `Cesium.setErrorHandler(...)`.
+
+## 1.0.1
+
+* Added a `NOTICE` file for dependency license attribution (`async`, `dio`, `Flutter`).
