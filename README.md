@@ -7,10 +7,12 @@ Cesium gives you small, composable building blocks for async loading states, der
 ## Features
 
 - `FutureResource<T>` for loading, success, and error states with a `ValueNotifier`
-- `HttpResource<T>` for simple HTTP-backed data sources with debounce and dependency reloading
-- `PaginatedHttpResource<T>` for paged results and list pagination patterns
+- `HttpResource<T>` for HTTP-backed data sources with debounce, dependency reloading, and progress-aware loading states
+- `PaginatedHttpResource<T>` for paged results and list pagination patterns, including inline loading/error states
 - `ComputedResource<T>` for derived values that automatically recompute when dependencies change
-- `CesiumService` base type plus registration helpers for dependency injection
+- `CesiumHttpService` for injectable HTTP clients with base options, interceptors, and reset support for testing
+- `HttpResourceBase` to unify request execution, debounce behavior, dependency tracking, and HTTP progress updates
+- `CesiumService` base type plus override/reset helpers for dependency injection and test isolation
 - `ManagedListenerMixin` to make listener cleanup easier in stateful widgets
 - Fluent listenable extensions for building widgets directly from resources and notifiers
 - Centralized error handling via `Cesium.logError()` and `Cesium.setErrorHandler()`
@@ -108,8 +110,20 @@ final posts = HttpResource<List<Post>>(
   debounceDuration: const Duration(milliseconds: 250),
 );
 
-final page = posts.pipe(
-  loading: (_) => const CircularProgressIndicator(),
+final page = posts.pipeProgress(
+  loading: (context, progress) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CircularProgressIndicator(),
+        if (progress > 0 && progress < 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('${(progress * 100).toStringAsFixed(0)}%'),
+          ),
+      ],
+    ),
+  ),
   error: (_, error) => Text('Failed to load posts: $error'),
   value: (context, list) => ListView.builder(
     itemCount: list.length,
@@ -118,18 +132,22 @@ final page = posts.pipe(
 );
 ```
 
+`HttpResourceBase` handles request execution, dependency-triggered reloads, debounce delays, and progress updates automatically.
+
 ### 4. Paginated resources
 
 ```dart
 final comments = PaginatedHttpResource<Comment>(
-  (page) => 'https://example.com/comments?page=$page',
+  () => 'https://example.com/comments',
   (json) => Comment.fromJson(json),
-  page: 1,
+  (page) => {'page': page},
   getMaxPages: (comment) => 5,
 );
 
 comments.loadMore();
 ```
+
+`PaginatedHttpResource` keeps accumulating values across pages and supports inline loading/error widgets through `pipePaginated(...)` when you want a list-style UI.
 
 ### 5. Services and dependency injection
 
@@ -148,6 +166,22 @@ void main() {
   register<AuthService>(() => AuthService());
   final auth = injectService<AuthService>();
 }
+```
+
+You can also override a registered service for tests or environment-specific configuration:
+
+```dart
+registerOverride<AuthService>(() => TestAuthService());
+final auth = injectService<AuthService>();
+```
+
+The shared `CesiumHttpService` is also injectable, which makes it easier to replace the default HTTP client or reset it between tests.
+
+```dart
+final http = ServiceProvider.withOverride(
+  () => CesiumHttpService(),
+  () => MockCesiumHttpService(),
+);
 ```
 
 ### 6. Widget piping helpers
