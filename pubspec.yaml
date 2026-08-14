@@ -1,13 +1,15 @@
 name: cesium
 description: "A lightweight state management library focusing on Listenable, ChangeNotifier and ValueNotifier to complement flutter instead of revamp it"
 version: 1.0.0
-homepage:
+homepage: https://github.com/Youssef-Mahmoud-M/cesium
+repository: https://github.com/Youssef-Mahmoud-M/cesium
 
 environment:
   sdk: ^3.8.1
   flutter: ">=1.17.0"
 
 dependencies:
+  async: ^2.13.0
   dio: ^5.11.0
   flutter:
     sdk: flutter
