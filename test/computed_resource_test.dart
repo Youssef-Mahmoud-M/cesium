@@ -2,7 +2,7 @@ import 'package:cesium/cesium.dart';
 import 'package:cesium/src/computed_resource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'service_injection_test.dart';
+import 'service_management_test.dart';
 
 void main() {
   test('Computed resource changes when dependencies change', () {
