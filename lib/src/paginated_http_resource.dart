@@ -11,6 +11,12 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
   final T Function(dynamic data) transform;
   final Map<String, dynamic> Function(int page) queryParamatersBuilder;
   int _page;
+  bool get reachedEnd {
+    if (getMaxPages == null || result?.firstOrNull == null) return false;
+    final maxPages = getMaxPages!(result!.first);
+    return _page == maxPages + 1;
+  }
+
   PaginatedHttpResource(
     this.urlBuilder,
     this.transform,
@@ -62,6 +68,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
     required List<T2> Function(T item) getItems,
     Widget Function(BuildContext, double progress)? inlineLoading,
     Widget Function(BuildContext, Object)? inlineError,
+    Widget Function(BuildContext)? inlineEnd,
     bool isRow = false,
 
     Axis? scrollDirection,
@@ -87,10 +94,13 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
       error: error,
       value: (context, val) {
         final items = val.expand((e) => getItems(e));
-        final hasInlineExtra =
+        final hasInlineInfo =
             (value.error != null && inlineError != null) ||
             (value.isLoading && inlineLoading != null);
-        final itemCount = items.length + (hasInlineExtra ? 1 : 0);
+        final itemCount =
+            items.length +
+            (hasInlineInfo ? 1 : 0) +
+            (reachedEnd && inlineEnd != null ? 1 : 0);
 
         return ListView.builder(
           scrollDirection:
@@ -115,14 +125,17 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
             if (index < items.length) {
               return itemBuilder(context, items.elementAt(index), index);
             }
-            if (value.isLoading && inlineLoading != null) {
-              return ValueListenableBuilder(
-                valueListenable: progressNotifier,
-                builder: (context, progress, _) =>
-                    inlineLoading(context, progress),
-              );
+            if (hasInlineInfo && index == items.length) {
+              if (value.isLoading && inlineLoading != null) {
+                return ValueListenableBuilder(
+                  valueListenable: progressNotifier,
+                  builder: (context, progress, _) =>
+                      inlineLoading(context, progress),
+                );
+              }
+              return inlineError!(context, value.error!);
             }
-            return inlineError!(context, value.error!);
+            return inlineEnd!(context);
           },
         );
       },
