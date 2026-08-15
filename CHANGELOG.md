@@ -27,3 +27,7 @@ Initial release with the following features:
 
 - Added inlineEnd to paginated http response so that when the user reaches an end it can display something
 - Added inlineStart to paginated http response so that widgets can be inserted at the start of the ListView.builder
+
+## 1.1.2
+
+- Added documentation to all sections of the code

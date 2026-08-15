@@ -23,7 +23,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  cesium: ^1.1.1
+  cesium: ^1.1.2
 ```
 
 Then import it in your Dart code:
