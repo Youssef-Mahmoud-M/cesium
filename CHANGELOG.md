@@ -22,3 +22,8 @@ Initial release with the following features:
 - Updated `HttpResource` and `PaginatedHttpResource` to use the new base flow while preserving pagination behavior and result accumulation.
 - Expanded the service management API with override/reset patterns to support testing and configuration flexibility.
 - Added focused coverage for initial loads, errors, dependency-triggered refreshes, and paginated requests.
+
+## 1.1.1
+
+- Added inlineEnd to paginated http response so that when the user reaches an end it can display something
+- Added inlineStart to paginated http response so that widgets can be inserted at the start of the ListView.builder

@@ -8,7 +8,7 @@ Cesium gives you small, composable building blocks for async loading states, der
 
 - `FutureResource<T>` for loading, success, and error states with a `ValueNotifier`
 - `HttpResource<T>` for HTTP-backed data sources with debounce, dependency reloading, and progress-aware loading states
-- `PaginatedHttpResource<T>` for paged results and list pagination patterns, including inline loading/error states
+- `PaginatedHttpResource<T>` for paged results and list pagination patterns, including inline start, loading, error, and end-of-list states
 - `ComputedResource<T>` for derived values that automatically recompute when dependencies change
 - `CesiumHttpService` for injectable HTTP clients with base options, interceptors, and reset support for testing
 - `HttpResourceBase` to unify request execution, debounce behavior, dependency tracking, and HTTP progress updates
@@ -23,7 +23,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  cesium: ^1.1.0
+  cesium: ^1.1.1
 ```
 
 Then import it in your Dart code:
@@ -147,7 +147,38 @@ final comments = PaginatedHttpResource<Comment>(
 comments.loadMore();
 ```
 
-`PaginatedHttpResource` keeps accumulating values across pages and supports inline loading/error widgets through `pipePaginated(...)` when you want a list-style UI.
+`PaginatedHttpResource` keeps accumulating values across pages and supports inline header, loading, error, and end-of-list widgets through `pipePaginated(...)` when you want a list-style UI.
+
+For example, you can add fixed widgets at the top of the list before the paginated items with `inlineStart`:
+
+```dart
+comments.pipePaginated(
+  loading: (_, progress) => const Center(child: CircularProgressIndicator()),
+  error: (_, error) => Center(child: Text('Error: $error')),
+  inlineStart: (_) => [
+    const Padding(
+      padding: EdgeInsets.all(12),
+      child: Text('Latest posts'),
+    ),
+  ],
+  inlineLoading: (_, progress) => Padding(
+    padding: const EdgeInsets.all(12),
+    child: Center(child: CircularProgressIndicator(value: progress)),
+  ),
+  inlineError: (_, error) => Padding(
+    padding: const EdgeInsets.all(12),
+    child: Text('Could not load more: $error'),
+  ),
+  inlineEnd: (_) => const Padding(
+    padding: EdgeInsets.all(12),
+    child: Text('You reached the end'),
+  ),
+  itemBuilder: (context, post, index) => ListTile(title: Text(post.title)),
+  getItems: (post) => [post],
+);
+```
+
+The `inlineStart` widgets render before the paginated items, while `inlineLoading`, `inlineError`, and `inlineEnd` remain appended after the loaded content in the same list.
 
 ### 5. Services and dependency injection
 
