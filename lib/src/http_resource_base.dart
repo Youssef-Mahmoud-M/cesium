@@ -4,14 +4,32 @@ import 'package:cesium/cesium.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 
+/// Base class for HTTP-backed resources.
+///
+/// Extends `FutureResource<T>` and provides progress reporting via
+/// `progressNotifier`, automatic dependency listening, and helpers to
+/// make HTTP requests using the shared `CesiumHttpService`.
 abstract class HttpResourceBase<T> extends FutureResource<T> {
+  /// Progress notifier that reports a value between `0` and `1`.
   final ValueNotifier<double> progressNotifier = ValueNotifier(0);
+
+  /// The shared HTTP service used to perform requests.
   final CesiumHttpService httpService = cesiumHttpServiceProvider.inject();
+
   final Iterable<Listenable> _dependecies;
+
+  /// Optional duration to debounce repeated `runRequest` calls.
   final Duration? debounceDuration;
   Timer? _debounceTimer;
+
+  /// Headers applied to each HTTP request made by this resource.
   Map<String, dynamic> headers;
 
+  /// Create a base HTTP resource.
+  ///
+  /// `dependecies` are listened to and will trigger reloads when they
+  /// notify. `perserveResults` controls whether previous results are
+  /// kept while a new request runs.
   HttpResourceBase({
     Iterable<Listenable> dependecies = const [],
     this.debounceDuration,
@@ -35,10 +53,13 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
     progressNotifier.dispose();
   }
 
+  /// Trigger a reload of the resource, honoring debounce settings.
   void reload() {
     runRequest();
   }
 
+  /// Trigger a request immediately or after the configured debounce
+  /// duration.
   void runRequest({bool useDebounce = true}) {
     if (!useDebounce || debounceDuration == null) {
       progressNotifier.value = 0;
@@ -52,6 +73,8 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
     });
   }
 
+  /// Make an HTTP GET request using the shared `CesiumHttpService` and
+  /// update the `progressNotifier` while downloading.
   Future<Response> makeHttpRequest(
     String url,
     Map<String, dynamic> queryParameters,
@@ -68,8 +91,11 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
     return resp;
   }
 
+  /// Subclasses implement this to perform the concrete request and
+  /// convert the response into the resource value of type `T`.
   Future<T> makeRequest();
 
+  /// Like `pipe`, but provides a progress value to the `loading` builder.
   Widget pipeProgress({
     required Widget Function(BuildContext context, double progress) loading,
     required Widget Function(BuildContext, Object) error,

@@ -3,11 +3,27 @@ import 'dart:async';
 import 'package:cesium/cesium.dart';
 import 'package:flutter/foundation.dart';
 
+/// A `ValueNotifier` whose value is computed from other `Listenable`
+/// dependencies.
+///
+/// The provided computation is run initially and whenever any dependency
+/// notifies. Optionally a debounce duration can be used to throttle
+/// recomputations.
 class ComputedResource<T> extends ValueNotifier<T> {
   final T Function() _computation;
   final Iterable<Listenable> _dependencies;
+
+  /// Optional debounce used to throttle recomputation.
   final Duration? debounceDuration;
+
+  /// Active debounce timer when a debounced recomputation is scheduled.
   Timer? timer;
+
+  /// Create a `ComputedResource`.
+  ///
+  /// The initial value is computed immediately from `_computation`. The
+  /// resource will re-run the computation whenever any dependency
+  /// notifies. Optionally pass a `debounceDuration` to throttle updates.
   ComputedResource(
     this._computation,
     this._dependencies, [

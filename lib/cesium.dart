@@ -1,3 +1,12 @@
+/*
+Cesium: lightweight helpers for service management and async resources.
+
+This package provides utilities to register and inject long-lived
+services, work with cancellable async resources (FutureResource),
+HTTP-backed resources (HttpResource, PaginatedHttpResource), and
+small UI helper extensions for piping ValueNotifier and Listenable
+values into Flutter widgets.
+*/
 export './src/service_management.dart';
 export './src/http_resource.dart';
 export './src/paginated_http_resource.dart';

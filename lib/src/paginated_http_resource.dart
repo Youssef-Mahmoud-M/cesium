@@ -4,19 +4,34 @@ import 'package:cesium/src/http_resource_base.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
+/// Resource that supports paginated HTTP requests and accumulates results.
 class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
+  /// Optional callback to determine the maximum number of pages from the
+  /// first item of the result set.
   final int Function(T)? getMaxPages;
+
+  /// Function that returns the request URL for the current page.
   final String Function() urlBuilder;
+
   final int _beginningPage;
+
+  /// Transform a page response into a single item of type `T`.
   final T Function(dynamic data) transform;
+
+  /// Build query parameters for the given `page` index.
   final Map<String, dynamic> Function(int page) queryParamatersBuilder;
   int _page;
+
+  /// Whether the pagination has reached the end based on `getMaxPages`.
   bool get reachedEnd {
     if (getMaxPages == null || result?.firstOrNull == null) return false;
     final maxPages = getMaxPages!(result!.first);
     return _page == maxPages + 1;
   }
 
+  /// Create a paginated resource. `transform` should convert each page's
+  /// response into a single item of type `T`. The resource accumulates
+  /// pages into a `List<T>`.
   PaginatedHttpResource(
     this.urlBuilder,
     this.transform,
@@ -30,6 +45,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
        _beginningPage = startPage,
        super(perserveResults: true);
 
+  /// Request the next page and append results.
   void loadMore() {
     if (getMaxPages != null && result?.isNotEmpty == true) {
       int maxPages = getMaxPages!(result!.first);
@@ -61,6 +77,8 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
     return newResult;
   }
 
+  /// A convenience builder for rendering paginated results into a
+  /// `ListView`-style widget, with optional inline loading / error widgets.
   Widget pipePaginated<T2>({
     required Widget Function(BuildContext context, double progress) loading,
     required Widget Function(BuildContext, Object) error,

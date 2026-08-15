@@ -1,17 +1,23 @@
 import 'package:cesium/cesium.dart';
 import 'package:dio/dio.dart';
 
+/// Global provider for the shared `CesiumHttpService`.
 final cesiumHttpServiceProvider = ServiceProvider(() => CesiumHttpService());
 
+/// Simple HTTP service built on top of `dio` exposed as a `CesiumService`.
 class CesiumHttpService extends CesiumService {
   Dio _dio = Dio();
+
+  /// Access or replace the underlying `BaseOptions` used by `dio`.
   BaseOptions get baseOptions => _dio.options;
   set baseOptions(BaseOptions newOptions) {
     _dio.options = newOptions;
   }
 
+  /// Interceptors applied to the underlying `dio` client.
   Interceptors get interceptors => _dio.interceptors;
 
+  /// Perform an HTTP GET request.
   Future<Response> get(
     String url, {
     Object? data,
@@ -30,6 +36,7 @@ class CesiumHttpService extends CesiumService {
     );
   }
 
+  /// Perform an HTTP POST request.
   Future<Response> post(
     String url, {
     Object? data,
@@ -50,6 +57,7 @@ class CesiumHttpService extends CesiumService {
     );
   }
 
+  /// Perform an HTTP PUT request.
   Future<Response> put(
     String url, {
     Object? data,
@@ -70,6 +78,7 @@ class CesiumHttpService extends CesiumService {
     );
   }
 
+  /// Perform an HTTP PATCH request.
   Future<Response> patch(
     String url, {
     Object? data,
@@ -90,6 +99,7 @@ class CesiumHttpService extends CesiumService {
     );
   }
 
+  /// Perform an HTTP DELETE request.
   Future<Response> delete(
     String url, {
     Object? data,

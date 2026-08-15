@@ -1,4 +1,3 @@
-import 'package:cesium/src/cesium_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cesium/cesium.dart';

@@ -1,5 +1,4 @@
 import 'package:cesium/cesium.dart';
-import 'package:cesium/src/computed_resource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'service_management_test.dart';

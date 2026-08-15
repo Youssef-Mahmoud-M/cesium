@@ -1,33 +1,54 @@
 import 'package:cesium/src/error_logger.dart';
-import 'package:flutter/foundation.dart';
 import 'package:async/async.dart';
 import 'package:flutter/widgets.dart';
 
+/// Represents the current state of a `FutureResource`.
 class FutureResourceValue<T> {
+  /// Whether the resource is currently loading.
   final bool isLoading;
+
+  /// Last successful value, if any.
   final T? value;
+
+  /// The last error that occurred, if any.
   final Object? error;
 
+  /// Construct a loading state with an optional current value.
   const FutureResourceValue([T? currentValue])
     : isLoading = true,
       value = currentValue,
       error = null;
+
+  /// Construct a successful value state.
   const FutureResourceValue.value(T this.value)
     : isLoading = false,
       error = null;
+
+  /// Construct an error state with an optional previous value.
   const FutureResourceValue.error(Object this.error, [T? currentValue])
     : isLoading = false,
       value = currentValue;
 }
 
+/// An observable wrapper around an asynchronous operation that supports
+/// cancellation and an optional option to preserve the last successful
+/// result while the new operation runs.
 class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   final bool _perserveResult;
   CancelableOperation<T>? _operation;
   bool _isDisposed = false;
+
+  /// Whether the resource is currently loading.
   bool get isLoading => value.isLoading;
+
+  /// The current error, if any.
   Object? get error => value.error;
+
+  /// The most recent successful result, if available.
   T? get result => value.value;
 
+  /// Create a `FutureResource`. If a `future` is provided it will be
+  /// started immediately.
   FutureResource(Future<T> Function()? future, [this._perserveResult = false])
     : super(const FutureResourceValue()) {
     if (future != null) {
@@ -62,10 +83,14 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
         });
   }
 
+  /// Cancel the currently running operation, if any.
   void cancel() {
     _operation?.cancel();
   }
 
+  /// Start a new asynchronous operation, cancelling any prior one. If
+  /// `_perserveResult` is true the previous successful result is kept
+  /// visible while the new operation runs.
   void runNewFuture(Future<T> Function() newFuture) {
     if (value.isLoading) {
       cancel();
@@ -76,12 +101,15 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   }
 
   @override
+  /// Dispose the resource and cancel any active operation.
   void dispose() {
     _isDisposed = true;
     _operation?.cancel();
     super.dispose();
   }
 
+  /// Build widgets that react to the current loading / error / value
+  /// states of this resource.
   Widget pipe({
     required Widget Function(BuildContext context) loading,
     required Widget Function(BuildContext, Object) error,
