@@ -66,6 +66,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
     required Widget Function(BuildContext, Object) error,
     required Widget Function(BuildContext, T2 value, int index) itemBuilder,
     required List<T2> Function(T item) getItems,
+    List<Widget> Function(BuildContext)? inlineStart,
     Widget Function(BuildContext, double progress)? inlineLoading,
     Widget Function(BuildContext, Object)? inlineError,
     Widget Function(BuildContext)? inlineEnd,
@@ -93,6 +94,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
       loading: loading,
       error: error,
       value: (context, val) {
+        final start = inlineStart == null ? <Widget>[] : inlineStart(context);
         final items = val.expand((e) => getItems(e));
         final hasInlineInfo =
             (value.error != null && inlineError != null) ||
@@ -120,8 +122,12 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
           keyboardDismissBehavior: keyboardDismissBehavior,
           restorationId: restorationId,
           clipBehavior: clipBehavior,
-          itemCount: itemCount,
+          itemCount: itemCount + start.length,
           itemBuilder: (context, index) {
+            if (index < start.length) {
+              return start[index];
+            }
+            index -= start.length;
             if (index < items.length) {
               return itemBuilder(context, items.elementAt(index), index);
             }
