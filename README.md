@@ -4,6 +4,10 @@ A lightweight Flutter state management library built around `Listenable`, `Chang
 
 Cesium gives you small, composable building blocks for async loading states, derived values, HTTP-backed resources, and service registration so you can keep your app logic simple and reactive.
 
+## Documentation
+
+Check out the official [Cesium Guide & Best Practices](https://github.com/Youssef-Mahmoud-M/cesium/blob/main/GUIDE.md).
+
 ## Features
 
 - `FutureResource<T>` for loading, success, and error states with a `ValueNotifier`
@@ -23,7 +27,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  cesium: ^1.1.2
+  cesium: ^1.2.0
 ```
 
 Then import it in your Dart code:
@@ -138,7 +142,7 @@ final page = posts.pipeProgress(
 
 ```dart
 final comments = PaginatedHttpResource<Comment>(
-  () => 'https://example.com/comments',
+  (_) => 'https://example.com/comments',
   (json) => Comment.fromJson(json),
   (page) => {'page': page},
   getMaxPages: (comment) => 5,
