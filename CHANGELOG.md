@@ -36,3 +36,7 @@ Initial release with the following features:
 
 - Added GUIDE.md as a comprehensive guide of the framework
 - Made urlBuilder in PaginatedHttpResource take a page parameter
+
+## 1.2.1
+
+- Made description better for pub.dev search
