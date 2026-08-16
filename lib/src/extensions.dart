@@ -1,3 +1,4 @@
+import 'package:cesium/src/future_resource.dart';
 import 'package:flutter/widgets.dart';
 
 /// Extensions to make it concise to render `ValueNotifier` values in the
@@ -22,6 +23,28 @@ extension CesiumValueNotifierX<T> on ValueNotifier<T> {
       valueListenable: this,
       builder: builder,
       child: child,
+    );
+  }
+}
+
+/// Extensions to make it concise to render `ValueNotifier<FutureResourceValue<T>>` values in the
+/// widget tree.
+extension CesiumValueNotifierFutureResourceX<T>
+    on ValueNotifier<FutureResourceValue<T>> {
+  /// Build widgets that react to the current loading / error / value
+  /// states of this resource.
+  Widget pipe({
+    required Widget Function(BuildContext context) loading,
+    required Widget Function(BuildContext, Object) error,
+    required Widget Function(BuildContext, T value) value,
+  }) {
+    return ValueListenableBuilder(
+      valueListenable: this,
+      builder: (context, val, _) {
+        if (val.isLoading) return loading(context);
+        if (val.error != null) return error(context, val.error!);
+        return value(context, val.value as T);
+      },
     );
   }
 }

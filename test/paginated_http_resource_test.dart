@@ -51,7 +51,7 @@ void main() {
         cesiumHttpServiceProvider.inject() as FakePaginatedHttpService;
     PaginatedHttpResource<Map<String, dynamic>> httpResource =
         PaginatedHttpResource(
-          () => 'https://example.com',
+          (_) => 'https://example.com',
           (data) => data,
           (page) => {'page': page},
         );
@@ -74,7 +74,7 @@ void main() {
           cesiumHttpServiceProvider.inject() as FakePaginatedHttpService;
       PaginatedHttpResource<Map<String, dynamic>> httpResource =
           PaginatedHttpResource(
-            () => 'https://example.com',
+            (_) => 'https://example.com',
             (data) => data,
             (page) => {'page': page},
             startPage: 3,
@@ -97,7 +97,7 @@ void main() {
         cesiumHttpServiceProvider.inject() as FakePaginatedHttpService;
     PaginatedHttpResource<Map<String, dynamic>> httpResource =
         PaginatedHttpResource(
-          () => 'https://example.com',
+          (_) => 'https://example.com',
           (data) => data,
           (page) => {'page': page},
         );
@@ -123,7 +123,7 @@ void main() {
         cesiumHttpServiceProvider.inject() as FakePaginatedHttpService;
     PaginatedHttpResource<Map<String, dynamic>> httpResource =
         PaginatedHttpResource(
-          () => 'https://example.com',
+          (_) => 'https://example.com',
           (data) => data,
           (page) => {'page': page},
           dependecies: [testValue],
@@ -159,7 +159,7 @@ void main() {
         cesiumHttpServiceProvider.inject() as FakePaginatedHttpService;
     PaginatedHttpResource<Map<String, dynamic>> httpResource =
         PaginatedHttpResource(
-          () => 'https://example.com',
+          (_) => 'https://example.com',
           (data) => data,
           (page) => {'page': page},
           getMaxPages: (data) {

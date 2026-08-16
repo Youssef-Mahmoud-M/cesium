@@ -11,7 +11,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
   final int Function(T)? getMaxPages;
 
   /// Function that returns the request URL for the current page.
-  final String Function() urlBuilder;
+  final String Function(int page) urlBuilder;
 
   final int _beginningPage;
 
@@ -65,7 +65,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
   @override
   Future<List<T>> makeRequest() async {
     final response = await makeHttpRequest(
-      urlBuilder(),
+      urlBuilder(_page),
       queryParamatersBuilder(_page),
     );
 
@@ -88,7 +88,6 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
     Widget Function(BuildContext, double progress)? inlineLoading,
     Widget Function(BuildContext, Object)? inlineError,
     Widget Function(BuildContext)? inlineEnd,
-    bool isRow = false,
 
     Axis? scrollDirection,
     bool reverse = false,
@@ -123,8 +122,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
             (reachedEnd && inlineEnd != null ? 1 : 0);
 
         return ListView.builder(
-          scrollDirection:
-              scrollDirection ?? (isRow ? Axis.horizontal : Axis.vertical),
+          scrollDirection: scrollDirection ?? Axis.vertical,
           reverse: reverse,
           controller: controller,
           primary: primary,

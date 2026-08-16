@@ -47,7 +47,7 @@ class _PaginatedHttpResourceExampleState
     super.initState();
     cesiumHttpServiceProvider.override(() => FakePaginatedHttpService());
     resource = PaginatedHttpResource(
-      () => 'https://example.com/items',
+      (_) => 'https://example.com/items',
       (data) => data as Map<String, dynamic>,
       (page) => {'page': page},
     );
