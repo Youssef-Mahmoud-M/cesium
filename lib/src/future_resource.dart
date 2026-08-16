@@ -91,12 +91,15 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   /// Start a new asynchronous operation, cancelling any prior one. If
   /// `_perserveResult` is true the previous successful result is kept
   /// visible while the new operation runs.
-  void runNewFuture(Future<T> Function() newFuture) {
+  /// if `optimisticValue` is passed it will be the value in result until a new value arrives
+  void runNewFuture(Future<T> Function() newFuture, [T? optimisticValue]) {
     if (value.isLoading) {
       cancel();
     }
     _operation?.cancel();
-    value = FutureResourceValue(_perserveResult ? result : null);
+    value = FutureResourceValue(
+      optimisticValue ?? (_perserveResult ? result : null),
+    );
     _startOperation(newFuture());
   }
 
@@ -118,7 +121,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
     return ValueListenableBuilder(
       valueListenable: this,
       builder: (context, val, _) {
-        if (result != null && _perserveResult) {
+        if (result != null) {
           return value(context, result as T);
         }
         if (val.isLoading) return loading(context);

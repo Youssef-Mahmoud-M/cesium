@@ -104,15 +104,16 @@ There are 4 properties on a `FutureResource<T>`:
 
 There are 3 methods on a `FutureResource<T>`:
 
-- `void runNewFuture(Future<T> Function() newFuture)`: A method to run a new future on the current resource, if one is already running it will be cancelled and replaced by the new future
+- `void runNewFuture(Future<T> Function() newFuture, [T? optimisticValue])`: A method to run a new future on the current resource, if one is already running it will be cancelled and replaced by the new future. If `optimisticValue` is passed, it will be the value in `result` until the operation is completed
 
 - `cancel()`: Cancels the current running future if there is one
 
 - `pipe`: It is used to pipe the current resource into the widget tree with the following parameters:
+  
   - `Widget Function(BuildContext context) loading`
   - `Widget Function(BuildContext, Object) error`
   - `Widget Function(BuildContext, T value) value`
-  It returns a Widget and auto rebuilds when the state changes
+    It returns a Widget and auto rebuilds when the state changes
 
 ## Services
 
