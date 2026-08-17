@@ -3,6 +3,11 @@ description: A lightweight state management framework using ValueNotifier and Li
 version: 1.2.3
 homepage: https://github.com/Youssef-Mahmoud-M/cesium
 repository: https://github.com/Youssef-Mahmoud-M/cesium
+topics:
+  - reactive
+  - ui
+  - async
+  - state-management
 
 environment:
   sdk: ^3.8.1
