@@ -46,3 +46,7 @@ Initial release with the following features:
 - Added optimistic value in FutureResource.runNewFuture
 - Added the ability to retry on error in FutureResource
 - Added a prameter for max retry count in http resource with exponential backoff
+
+## 1.2.3
+
+- Changed description
