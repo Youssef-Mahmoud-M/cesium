@@ -18,6 +18,29 @@ class _FutureResourceExampleState extends State<FutureResourceExample> {
     futureFunction,
     true,
   );
+  late final FutureResource<String> resourceReattempt = FutureResource(
+    () async {
+      throw Exception("Test");
+    },
+    false,
+    (_, reattempt) => reattemptFutureFunction(reattempt),
+  );
+  late final FutureResource<String> perservedResourceReattempt = FutureResource(
+    () async {
+      throw Exception("Test");
+    },
+    true,
+    (_, reattempt) => reattemptFutureFunction(reattempt),
+  );
+
+  Future<String> reattemptFutureFunction(int attempt) async {
+    debugPrint("Reattempt $attempt");
+    await Future.delayed(const Duration(seconds: 2));
+    if (attempt < 3) {
+      throw Exception("Exception");
+    }
+    return "Loaded at  ${DateTime.now()}";
+  }
 
   Future<String> futureFunction() async {
     await Future.delayed(const Duration(seconds: 2));
@@ -106,6 +129,83 @@ class _FutureResourceExampleState extends State<FutureResourceExample> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => resourcePerserved.cancel(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 32),
+            const Text(
+              "Reattempt Resource",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            resourceReattempt.pipe(
+              loading: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (context, err) => Text('Error: $err'),
+              value: (context, val) => Text(
+                val,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => resourceReattempt.runNewFuture(() async {
+                      throw Exception("Test");
+                    }),
+                    child: const Text('Run New'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => resourceReattempt.cancel(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 32),
+            const Text(
+              "Preserved Reattempt Resource",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            perservedResourceReattempt.pipe(
+              loading: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (context, err) => Text('Error: $err'),
+              value: (context, val) => Text(
+                val,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        perservedResourceReattempt.runNewFuture(() async {
+                          throw Exception("Test");
+                        }),
+                    child: const Text('Run New'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => perservedResourceReattempt.cancel(),
                     child: const Text('Cancel'),
                   ),
                 ),

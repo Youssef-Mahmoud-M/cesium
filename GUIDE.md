@@ -10,6 +10,7 @@ There are two Http resources in Cesium `HttpResource<T>` and `PaginatedHttpResou
 - `Duration? debounceDuration`: To debounce reloading when dependencies update so that for example you can pass a `TextEditingController` and a debounce duration of 1 second, the http resource will wait until there have been no updates for 1 second then reload
 - `Map<String, dynamic> headers` to customize the headers sent by the http resource in the request
 - `T Function(dynamic data) transform` takes the response of the URL and transforms it into `T`
+- `int maxRetryAttempts` the maximum amount of times the resource will retry on failure, defaults to 0
 
 Each http resource has its own version of `queryParametersBuilder` and `urlBuilder`
 
@@ -62,7 +63,7 @@ For `PaginatedHttpResource<T>` it exposes `pipePaginated` which has the followin
 **Example:**
 
 ```dart
-Resource<List<User>> usersResource = PaginatedHttpResource<UsersResponse>(
+PaginatedHttpResource<List<User>> usersResource = PaginatedHttpResource<UsersResponse>(
   urlBuilder: (page) => 'https://api.example.com/users',
   queryParametersBuilder: (page) => {'page': page.toString()},
   transform: (data) => UsersResponse.fromJson(data),
@@ -91,6 +92,8 @@ A `FutureResource<T>` is used to handle futures in the UI more cleanly it has th
 1. The future it will run which is of type `Future<T> Function()?`, if null it will stay loading until a future is passed to it through the `runNewFuture` function
 
 2. To preserve the result or not which is a boolean, it defaults to false, if false then when loading a new future or when an error occurs the `result` property returns to null, if true when loading a new future the `result` property does not turn to null, it waits until the new future finishes and then replaces the `result` when an error occurs, the `result` property contains the last successful result and the `error` property contains the error
+
+3. A function that is run when an error occurs to reattempt, it is optional but will help in retrying. It has a signature of `Future<T>? Function(Object error, int attempt)?`, if the return value is null it will stop reattempting.
 
 There are 4 properties on a `FutureResource<T>`:
 

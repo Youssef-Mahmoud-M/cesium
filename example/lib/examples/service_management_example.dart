@@ -79,12 +79,14 @@ class ServiceManagementExample extends StatefulWidget {
 
 class _ServiceManagementExampleState extends State<ServiceManagementExample> {
   final githubService = gitHubStatsServiceProvider.inject();
-  late final FutureResource<RepoStats> githubResource;
+  late final FutureResource<RepoStats> githubResource = FutureResource(
+    githubService.getRepoStats,
+  );
 
   @override
-  void initState() {
-    githubResource = FutureResource(githubService.getRepoStats);
-    super.initState();
+  void dispose() {
+    githubResource.dispose();
+    super.dispose();
   }
 
   @override

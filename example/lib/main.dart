@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs
 
+import 'package:cesium_example/examples/http_resource_retry_example.dart';
 import 'package:flutter/material.dart';
 import 'examples/service_management_example.dart';
 import 'examples/computed_resource_example.dart';
@@ -36,6 +37,7 @@ class ExampleList extends StatelessWidget {
       {'Extensions (pipe)': () => const ExtensionsExample()},
       {'FutureResource': () => const FutureResourceExample()},
       {'HttpResource': () => const HttpResourceExample()},
+      {'Retry HttpResource': () => const HttpResourceRetryExample()},
       {'PaginatedHttpResource': () => const PaginatedHttpResourceExample()},
       {'ManagedListenerMixin': () => const ManagedListenerExample()},
       {'CesiumHttpService': () => const CesiumHttpServiceExample()},

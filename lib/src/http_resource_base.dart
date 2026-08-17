@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:cesium/cesium.dart';
 import 'package:dio/dio.dart';
@@ -20,6 +21,9 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
 
   /// Optional duration to debounce repeated `runRequest` calls.
   final Duration? debounceDuration;
+
+  /// Optional max retry attempts with exponential backoff
+  final int maxRetryAttempts;
   Timer? _debounceTimer;
 
   /// Headers applied to each HTTP request made by this resource.
@@ -29,18 +33,29 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
   ///
   /// `dependecies` are listened to and will trigger reloads when they
   /// notify. `perserveResults` controls whether previous results are
-  /// kept while a new request runs.
+  /// kept while a new request runs. `maxRetryAttempts` is the max
+  /// number of times it will reattempt the request
   HttpResourceBase({
     Iterable<Listenable> dependecies = const [],
     this.debounceDuration,
     this.headers = const {},
     bool perserveResults = false,
+    this.maxRetryAttempts = 0,
   }) : _dependecies = dependecies,
        super(null, perserveResults) {
     runRequest(useDebounce: false);
     for (var dependency in _dependecies) {
       dependency.addListener(reload);
     }
+    retryActionOnError = (error, attempt) {
+      if (attempt <= maxRetryAttempts) {
+        final double delaySeconds = 3 * math.pow(1.5, attempt - 1).toDouble();
+        final int delay = delaySeconds.ceil();
+
+        return Future.delayed(Duration(seconds: delay), () => makeRequest());
+      }
+      return null;
+    };
   }
 
   @override

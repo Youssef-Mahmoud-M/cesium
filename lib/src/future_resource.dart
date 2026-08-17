@@ -35,8 +35,13 @@ class FutureResourceValue<T> {
 /// result while the new operation runs.
 class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   final bool _perserveResult;
+  int _currentAttempt = 0;
   CancelableOperation<T>? _operation;
   bool _isDisposed = false;
+  bool _isRetrying = false;
+
+  /// A method that is called to retry an action when an error occurs, if it returns null the last error will used in the error state
+  Future<T>? Function(Object error, int attempt)? retryActionOnError;
 
   /// Whether the resource is currently loading.
   bool get isLoading => value.isLoading;
@@ -49,8 +54,11 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
 
   /// Create a `FutureResource`. If a `future` is provided it will be
   /// started immediately.
-  FutureResource(Future<T> Function()? future, [this._perserveResult = false])
-    : super(const FutureResourceValue()) {
+  FutureResource(
+    Future<T> Function()? future, [
+    this._perserveResult = false,
+    this.retryActionOnError,
+  ]) : super(const FutureResourceValue()) {
     if (future != null) {
       _startOperation(future());
     }
@@ -60,7 +68,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
     _operation = CancelableOperation.fromFuture(
       future,
       onCancel: () {
-        if (!_isDisposed) {
+        if (!_isDisposed && !_isRetrying) {
           value = FutureResourceValue(_perserveResult ? result : null);
         }
       },
@@ -69,18 +77,37 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
     _operation!.value
         .then((val) {
           if (!_isDisposed && !(_operation?.isCanceled ?? true)) {
+            _currentAttempt = 0;
             value = FutureResourceValue.value(val);
           }
         })
         .catchError((e) {
+          Cesium.logError(e);
           if (!_isDisposed && !(_operation?.isCanceled ?? true)) {
+            _currentAttempt++;
+            final newAction = retryActionOnError?.call(e, _currentAttempt);
+
+            if (newAction != null) {
+              _executeReattempt(() => newAction);
+              return;
+            }
+
+            _currentAttempt = 0; // Reset on final failure
             value = FutureResourceValue.error(
               e,
               _perserveResult ? result : null,
             );
           }
-          Cesium.logError(e);
         });
+  }
+
+  void _executeReattempt(Future<T> Function() newFuture) {
+    _isRetrying = true;
+    _operation?.cancel();
+    _isRetrying = false;
+    // Preserves optimisticData or prior result across reattempts
+    value = FutureResourceValue(result);
+    _startOperation(newFuture());
   }
 
   /// Cancel the currently running operation, if any.
@@ -93,9 +120,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   /// visible while the new operation runs.
   /// if `optimisticValue` is passed it will be the value in result until a new value arrives
   void runNewFuture(Future<T> Function() newFuture, [T? optimisticValue]) {
-    if (value.isLoading) {
-      cancel();
-    }
+    _currentAttempt = 0;
     _operation?.cancel();
     value = FutureResourceValue(
       optimisticValue ?? (_perserveResult ? result : null),

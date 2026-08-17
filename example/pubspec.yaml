@@ -1,6 +1,7 @@
 name: cesium_example
 description: "Example Flutter app demonstrating basic usage of the cesium package"
 version: 0.0.1
+publish_to: none
 
 environment:
   sdk: ">=3.8.1 <4.0.0"

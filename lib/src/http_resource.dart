@@ -27,6 +27,7 @@ class HttpResource<T> extends HttpResourceBase<T> {
     super.dependecies = const [],
     super.debounceDuration,
     super.headers = const {},
+    super.maxRetryAttempts,
   });
 
   @override

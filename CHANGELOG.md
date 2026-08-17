@@ -40,3 +40,9 @@ Initial release with the following features:
 ## 1.2.1
 
 - Made description better for pub.dev search
+
+## 1.2.2
+
+- Added optimistic value in FutureResource.runNewFuture
+- Added the ability to retry on error in FutureResource
+- Added a prameter for max retry count in http resource with exponential backoff

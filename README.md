@@ -27,7 +27,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  cesium: ^1.2.1
+  cesium: ^1.2.2
 ```
 
 Then import it in your Dart code:
@@ -56,13 +56,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late final FutureResource<Map<String, dynamic>> profile;
-
-  @override
-  void initState() {
-    super.initState();
-    profile = FutureResource(() => fetchProfile());
-  }
+  late final FutureResource<Map<String, dynamic>> profile = FutureResource(() => fetchProfile());
 
   Future<Map<String, dynamic>> fetchProfile() async {
     await Future.delayed(const Duration(milliseconds: 500));

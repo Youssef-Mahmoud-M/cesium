@@ -39,6 +39,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
     super.dependecies = const [],
     super.debounceDuration,
     super.headers = const {},
+    super.maxRetryAttempts,
     this.getMaxPages,
     int startPage = 1,
   }) : _page = startPage,
