@@ -40,7 +40,8 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   bool _isDisposed = false;
   bool _isRetrying = false;
 
-  /// A method that is called to retry an action when an error occurs, if it returns null the last error will used in the error state
+  /// A method that is called to retry an action when an error occurs,
+  /// if it returns null the last error will used in the error state
   Future<T>? Function(Object error, int attempt)? retryActionOnError;
 
   /// Whether the resource is currently loading.

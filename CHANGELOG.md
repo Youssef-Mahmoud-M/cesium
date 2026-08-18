@@ -50,3 +50,8 @@ Initial release with the following features:
 ## 1.2.3
 
 - Changed description
+
+## 1.2.4
+
+- Added topics
+- Added ability to override dio instance in CesiumHttpService
