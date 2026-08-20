@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs
 
+import 'package:cesium_example/examples/action_resource_example.dart';
 import 'package:cesium_example/examples/http_resource_retry_example.dart';
 import 'package:flutter/material.dart';
 import 'examples/service_management_example.dart';
@@ -36,6 +37,7 @@ class ExampleList extends StatelessWidget {
       {'Error Logger': () => const ErrorLoggerExample()},
       {'Extensions (pipe)': () => const ExtensionsExample()},
       {'FutureResource': () => const FutureResourceExample()},
+      {'Action Resource': () => const ActionResourceExample()},
       {'HttpResource': () => const HttpResourceExample()},
       {'Retry HttpResource': () => const HttpResourceRetryExample()},
       {'PaginatedHttpResource': () => const PaginatedHttpResourceExample()},
@@ -44,7 +46,10 @@ class ExampleList extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cesium Examples')),
+      appBar: AppBar(
+        title: const Text('Cesium Examples'),
+        scrolledUnderElevation: 0,
+      ),
       body: ListView.separated(
         itemCount: items.length,
         separatorBuilder: (_, __) => const Divider(height: 1),
@@ -57,7 +62,7 @@ class ExampleList extends StatelessWidget {
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => Scaffold(
-                  appBar: AppBar(title: Text(title)),
+                  appBar: AppBar(title: Text(title), scrolledUnderElevation: 0),
                   body: SafeArea(child: builder()),
                 ),
               ),

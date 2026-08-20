@@ -118,6 +118,58 @@ There are 3 methods on a `FutureResource<T>`:
   - `Widget Function(BuildContext, T value) value`
     It returns a Widget and auto rebuilds when the state changes
 
+## Action resource
+
+An `ActionResource<T>` is used to handle actions that are not intiated right as the page starts, for example a login. It has 4 states:
+
+- idle
+
+- loading
+
+- error
+
+- done
+
+It defaults to idle but if a future is passed to it, it will be loading. it has 3 parameters
+
+1. To preserve the result or not which is a boolean, it defaults to false, if false then when loading a new future or when an error occurs the `result` property returns to null, if true when loading a new future the `result` property does not turn to null, it waits until the new future finishes and then replaces the `result` when an error occurs, the `result` property contains the last successful result and the `error` property contains the error
+
+2. A function that is run when an error occurs to reattempt, it is optional but will help in retrying. It has a signature of `Future<T>? Function(Object error, int attempt)?`, if the return value is null it will stop reattempting.
+
+3. The future it will run which is of type `Future<T> Function()?`, if null it will stay idle until a future is passed to it through the `runNewAction` function
+
+There is a definition for an enum called `ActionStatus`, it has 4 possible states:
+
+- loading
+
+- idle
+
+- error
+
+- done
+
+There are 4 properties on a n`ActionResource<T>`:
+
+- `ActionResourceValue<T> value`: It contains the current state
+
+- `ActionStatus status`: A shorthand for `value.status`
+
+- `Object? error`: A shorthand for `value.error`
+
+- `T? result`: A shorthand for `value.value`
+
+There are 3 methods on an `ActionResource<T>`:
+
+- `void runNewAction(Future<T> Function() newFuture, [T? optimisticValue])`: A method to run a new future on the current resource, if one is already running it will be cancelled and replaced by the new future. If `optimisticValue` is passed, it will be the value in `result` until the operation is completed
+
+- `cancel()`: Cancels the current running action if there is one
+
+- `pipeButton`: It is used to pipe the current resource into the widget tree with the following parameters:
+  
+  - `Widget Function(BuildContext, ActionStatus, Widget?) buttonBuilder`
+  - `Widget? child`
+    It returns a Widget and auto rebuilds when the state changes, the child does not rebuild.
+
 ## Services
 
 ### Registration and injection
@@ -248,14 +300,20 @@ Both `HttpResource` and services should handle errors gracefully:
 **Error handling example:**
 
 ```dart
-FutureResource<List<User>>(
+FutureResource<List<User>> futureResource = FutureResource<List<User>>(
   (context) async => userService.fetchUsers(),
-).pipe(
+);
+
+futureResource.pipe(
   loading: (context) => LoadingWidget(),
   error: (context, error) => ErrorWidget(message: error.toString()),
   value: (context, users) => UsersList(users: users),
 );
 ```
+
+### Extras
+
+Services can contain any type of resource if it needs to be shared across different pages, such resources must not be disposed in the UI as it can lead to unexpected results.
 
 ## Computed resource
 

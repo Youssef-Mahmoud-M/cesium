@@ -51,7 +51,8 @@ Initial release with the following features:
 
 - Changed description
 
-## 1.2.4
+## 1.3.0
 
 - Added topics
 - Added ability to override dio instance in CesiumHttpService
+- Added ActionResource to handle async actions cleanly

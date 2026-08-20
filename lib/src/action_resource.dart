@@ -2,10 +2,25 @@ import 'package:cesium/src/error_logger.dart';
 import 'package:async/async.dart';
 import 'package:flutter/widgets.dart';
 
-/// Represents the current state of a `FutureResource`.
-class FutureResourceValue<T> {
-  /// Whether the resource is currently loading.
-  final bool isLoading;
+/// Enum representing the current status of the action
+enum ActionStatus {
+  /// When the action is loading
+  loading,
+
+  /// When currently idle
+  idle,
+
+  /// When the action fails
+  error,
+
+  /// When the action succeeds
+  done,
+}
+
+/// Represents the current state of a `ActionResource`.
+class ActionResourceValue<T> {
+  /// The current status of the action
+  final ActionStatus status;
 
   /// Last successful value, if any.
   final T? value;
@@ -13,27 +28,33 @@ class FutureResourceValue<T> {
   /// The last error that occurred, if any.
   final Object? error;
 
+  /// Construct an idle state with an optional current value.
+  const ActionResourceValue([T? currentValue])
+    : status = ActionStatus.idle,
+      value = currentValue,
+      error = null;
+
   /// Construct a loading state with an optional current value.
-  const FutureResourceValue([T? currentValue])
-    : isLoading = true,
+  const ActionResourceValue.loading([T? currentValue])
+    : status = ActionStatus.loading,
       value = currentValue,
       error = null;
 
   /// Construct a successful value state.
-  const FutureResourceValue.value(T this.value)
-    : isLoading = false,
+  const ActionResourceValue.value(T this.value)
+    : status = ActionStatus.done,
       error = null;
 
   /// Construct an error state with an optional previous value.
-  const FutureResourceValue.error(Object this.error, [T? currentValue])
-    : isLoading = false,
+  const ActionResourceValue.error(Object this.error, [T? currentValue])
+    : status = ActionStatus.error,
       value = currentValue;
 }
 
 /// An observable wrapper around an asynchronous operation that supports
 /// cancellation and an optional option to preserve the last successful
 /// result while the new operation runs.
-class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
+class ActionResource<T> extends ValueNotifier<ActionResourceValue<T>> {
   final bool _perserveResult;
   int _currentAttempt = 0;
   CancelableOperation<T>? _operation;
@@ -45,7 +66,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   Future<T>? Function(Object error, int attempt)? retryActionOnError;
 
   /// Whether the resource is currently loading.
-  bool get isLoading => value.isLoading;
+  ActionStatus get status => value.status;
 
   /// The current error, if any.
   Object? get error => value.error;
@@ -53,13 +74,17 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   /// The most recent successful result, if available.
   T? get result => value.value;
 
-  /// Create a `FutureResource`. If a `future` is provided it will be
+  /// Create an `ActionResource`. If a `future` is provided it will be
   /// started immediately.
-  FutureResource(
-    Future<T> Function()? future, [
+  ActionResource([
     this._perserveResult = false,
     this.retryActionOnError,
-  ]) : super(const FutureResourceValue()) {
+    Future<T> Function()? future,
+  ]) : super(
+         future == null
+             ? const ActionResourceValue()
+             : const ActionResourceValue.loading(),
+       ) {
     if (future != null) {
       _startOperation(future());
     }
@@ -70,7 +95,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
       future,
       onCancel: () {
         if (!_isDisposed && !_isRetrying) {
-          value = FutureResourceValue(_perserveResult ? result : null);
+          value = ActionResourceValue(_perserveResult ? result : null);
         }
       },
     );
@@ -79,7 +104,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
         .then((val) {
           if (!_isDisposed && !(_operation?.isCanceled ?? true)) {
             _currentAttempt = 0;
-            value = FutureResourceValue.value(val);
+            value = ActionResourceValue.value(val);
           }
         })
         .catchError((e) {
@@ -94,7 +119,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
             }
 
             _currentAttempt = 0; // Reset on final failure
-            value = FutureResourceValue.error(
+            value = ActionResourceValue.error(
               e,
               _perserveResult ? result : null,
             );
@@ -106,7 +131,6 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
     _isRetrying = true;
     _operation?.cancel();
     _isRetrying = false;
-    // Preserves optimisticData or prior result across reattempts
     _startOperation(newFuture());
   }
 
@@ -119,13 +143,13 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
   /// `_perserveResult` is true the previous successful result is kept
   /// visible while the new operation runs.
   /// if `optimisticValue` is passed it will be the value in result until a new value arrives
-  void runNewFuture(Future<T> Function() newFuture, [T? optimisticValue]) {
+  void runNewAction(Future<T> Function() newAction, [T? optimisticValue]) {
     _currentAttempt = 0;
     _operation?.cancel();
-    value = FutureResourceValue(
+    value = ActionResourceValue.loading(
       optimisticValue ?? (_perserveResult ? result : null),
     );
-    _startOperation(newFuture());
+    _startOperation(newAction());
   }
 
   @override
@@ -136,23 +160,16 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
     super.dispose();
   }
 
-  /// Build widgets that react to the current loading / error / value
-  /// states of this resource.
-  Widget pipe({
-    required Widget Function(BuildContext context) loading,
-    required Widget Function(BuildContext, Object) error,
-    required Widget Function(BuildContext, T value) value,
+  /// Convenience widget to pipe a button with a loading and idle state
+  Widget pipeButton({
+    required Widget Function(BuildContext, ActionStatus, Widget?) buttonBuilder,
+    Widget? child,
   }) {
     return ValueListenableBuilder(
       valueListenable: this,
-      builder: (context, val, _) {
-        if (result != null) {
-          return value(context, result as T);
-        }
-        if (val.isLoading) return loading(context);
-        if (val.error != null) return error(context, val.error!);
-        return value(context, val.value as T);
-      },
+      builder: (context, value, child) =>
+          buttonBuilder(context, value.status, child),
+      child: child,
     );
   }
 }
