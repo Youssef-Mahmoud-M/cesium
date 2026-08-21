@@ -12,30 +12,40 @@ class FutureResourceExample extends StatefulWidget {
   State<FutureResourceExample> createState() => _FutureResourceExampleState();
 }
 
-class _FutureResourceExampleState extends State<FutureResourceExample> {
-  late final FutureResource<String> resource = FutureResource(futureFunction);
-  late final FutureResource<String> resourcePerserved = FutureResource(
-    futureFunction,
-    true,
+class _FutureResourceExampleState extends State<FutureResourceExample>
+    with ManagedListenerMixin {
+  late final FutureResource<String> resource = manage(
+    FutureResource(future: futureFunction),
   );
-  late final FutureResource<String> resourceReattempt = FutureResource(
-    () async {
-      throw Exception("Test");
-    },
-    false,
-    (_, reattempt) => reattemptFutureFunction(reattempt),
+  late final FutureResource<String> resourcePerserved = manage(
+    FutureResource(future: futureFunction, perserveResult: true),
   );
-  late final FutureResource<String> perservedResourceReattempt = FutureResource(
-    () async {
-      throw Exception("Test");
-    },
-    true,
-    (_, reattempt) => reattemptFutureFunction(reattempt),
+  late final FutureResource<String> resourceReattempt = manage(
+    FutureResource(
+      future: () async {
+        throw Exception("Test");
+      },
+      perserveResult: false,
+      retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
+    ),
   );
-  late final FutureResource<String> failiureResource = FutureResource(() async {
-    await Future.delayed(Duration(seconds: 3));
-    throw Exception("Test");
-  });
+  late final FutureResource<String> perservedResourceReattempt = manage(
+    FutureResource(
+      future: () async {
+        throw Exception("Test");
+      },
+      perserveResult: true,
+      retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
+    ),
+  );
+  late final FutureResource<String> failiureResource = manage(
+    FutureResource(
+      future: () async {
+        await Future.delayed(Duration(seconds: 3));
+        throw Exception("Test");
+      },
+    ),
+  );
 
   Future<String> reattemptFutureFunction(int attempt) async {
     debugPrint("Reattempt $attempt");
@@ -49,16 +59,6 @@ class _FutureResourceExampleState extends State<FutureResourceExample> {
   Future<String> futureFunction() async {
     await Future.delayed(const Duration(seconds: 2));
     return 'Loaded at ${DateTime.now()}';
-  }
-
-  @override
-  void dispose() {
-    resource.dispose();
-    resourcePerserved.dispose();
-    resourceReattempt.dispose();
-    perservedResourceReattempt.dispose();
-    failiureResource.dispose();
-    super.dispose();
   }
 
   @override

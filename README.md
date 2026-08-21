@@ -11,6 +11,7 @@ Check out the official [Cesium Guide & Best Practices](https://github.com/Yousse
 ## Features
 
 - `FutureResource<T>` for loading, success, and error states with a `ValueNotifier`
+- `ActionResource<T>` for handling async actions with loading, error, success, and retry states
 - `HttpResource<T>` for HTTP-backed data sources with debounce, dependency reloading, and progress-aware loading states
 - `PaginatedHttpResource<T>` for paged results and list pagination patterns, including inline start, loading, error, and end-of-list states
 - `ComputedResource<T>` for derived values that automatically recompute when dependencies change
@@ -27,7 +28,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  cesium: ^1.3.0
+  cesium: ^2.0.0
 ```
 
 Then import it in your Dart code:
@@ -56,7 +57,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late final FutureResource<Map<String, dynamic>> profile = FutureResource(() => fetchProfile());
+  late final FutureResource<Map<String, dynamic>> profile = FutureResource(
+    future: () => fetchProfile(),
+  );
 
   Future<Map<String, dynamic>> fetchProfile() async {
     await Future.delayed(const Duration(milliseconds: 500));
@@ -219,7 +222,9 @@ You can handle actions cleanly with action resource instead of tracking state ma
 
 ```dart
 // 1. Declare an ActionResource (with optional value preservation or retry logic)
-final loginAction = ActionResource<User>(true);
+final loginAction = ActionResource<User>(
+  perserveResult: true,
+);
 
 // 2. Trigger async work
 loginAction.runNewAction(() => authService.login(email, password));

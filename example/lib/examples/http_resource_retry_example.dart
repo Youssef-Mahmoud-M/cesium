@@ -45,24 +45,21 @@ class HttpResourceRetryExample extends StatefulWidget {
       _HttpResourceRetryExampleState();
 }
 
-class _HttpResourceRetryExampleState extends State<HttpResourceRetryExample> {
+class _HttpResourceRetryExampleState extends State<HttpResourceRetryExample>
+    with ManagedListenerMixin {
   late final HttpResource<Map<String, dynamic>> resource;
 
   @override
   void initState() {
     super.initState();
     cesiumHttpServiceProvider.override(() => FakeRetryHttpService());
-    resource = HttpResource(
-      () => 'https://example.com/items',
-      (data) => data as Map<String, dynamic>,
-      maxRetryAttempts: 3,
+    resource = manage(
+      HttpResource(
+        () => 'https://example.com/items',
+        (data) => data as Map<String, dynamic>,
+        maxRetryAttempts: 3,
+      ),
     );
-  }
-
-  @override
-  void dispose() {
-    resource.dispose();
-    super.dispose();
   }
 
   @override

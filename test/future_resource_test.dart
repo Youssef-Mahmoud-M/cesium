@@ -3,10 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('Future resource updates with correct value in success', () async {
-    FutureResource<String> resource = FutureResource<String>(() async {
-      await Future.delayed(Duration(milliseconds: 100));
-      return "Hello";
-    });
+    FutureResource<String> resource = FutureResource<String>(
+      future: () async {
+        await Future.delayed(Duration(milliseconds: 100));
+        return "Hello";
+      },
+    );
 
     expect(resource.isLoading, true);
 
@@ -19,10 +21,12 @@ void main() {
   });
 
   test('Future resource updates with error in failiure', () async {
-    FutureResource<String> resource = FutureResource(() async {
-      await Future.delayed(Duration(milliseconds: 100));
-      throw Exception("Test exception");
-    });
+    FutureResource<String> resource = FutureResource(
+      future: () async {
+        await Future.delayed(Duration(milliseconds: 100));
+        throw Exception("Test exception");
+      },
+    );
 
     expect(resource.isLoading, true);
 

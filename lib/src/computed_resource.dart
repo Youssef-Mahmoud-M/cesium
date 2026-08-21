@@ -26,9 +26,9 @@ class ComputedResource<T> extends ValueNotifier<T> {
   /// notifies. Optionally pass a `debounceDuration` to throttle updates.
   ComputedResource(
     this._computation,
-    this._dependencies, [
+    this._dependencies, {
     this.debounceDuration,
-  ]) : super(
+  }) : super(
          (() {
            try {
              return _computation();

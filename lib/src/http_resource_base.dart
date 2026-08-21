@@ -42,12 +42,12 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
     bool perserveResults = false,
     this.maxRetryAttempts = 0,
   }) : _dependecies = dependecies,
-       super(null, perserveResults) {
+       super(perserveResult: perserveResults) {
     runRequest(useDebounce: false);
     for (var dependency in _dependecies) {
       dependency.addListener(reload);
     }
-    retryActionOnError = (error, attempt) {
+    retryOnError = (error, attempt) {
       if (attempt <= maxRetryAttempts) {
         final double delaySeconds = 3 * math.pow(1.5, attempt - 1).toDouble();
         final int delay = delaySeconds.ceil();

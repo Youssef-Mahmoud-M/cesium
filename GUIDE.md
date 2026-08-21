@@ -4,19 +4,44 @@
 
 ### Construction and use
 
-There are two Http resources in Cesium `HttpResource<T>` and `PaginatedHttpResource<T>`. They both share a common set of parameters:
+There are two Http resources in Cesium `HttpResource<T>` and `PaginatedHttpResource<T>`. 
 
-- `Iterable<Listenable> dependencies`: When one of the dependencies notifies the http resource, it auto reruns `urlBuilder` and `queryParametersBuilder` and then reruns the http request
-- `Duration? debounceDuration`: To debounce reloading when dependencies update so that for example you can pass a `TextEditingController` and a debounce duration of 1 second, the http resource will wait until there have been no updates for 1 second then reload
-- `Map<String, dynamic> headers` to customize the headers sent by the http resource in the request
-- `T Function(dynamic data) transform` takes the response of the URL and transforms it into `T`
-- `int maxRetryAttempts` the maximum amount of times the resource will retry on failure, defaults to 0
+Constructors:
 
-Each http resource has its own version of `queryParametersBuilder` and `urlBuilder`
+```dart
+HttpResource<T>(
+  String Function() urlBuilder,
+  T Function(dynamic data) transform, {
+    Map<String, dynamic> Function()? queryParametersBuilder,
+    Iterable<Listenable> dependecies = const [],
+    Duration? debounceDuration,
+    Map<String, dynamic> headers = const {},
+    int maxRetryAttempts = 0,
+  }
+);
 
-For `HttpResource<T>` their signatures are `String Function() urlBuilder` and `Map<String, dynamic> Function()? queryParametersBuilder`
+PaginatedHttpResource<T>(
+  String Function(int page) urlBuilder,
+  T Function(dynamic data) transform,
+  Map<String, dynamic> Function(int page) queryParamatersBuilder, {
+    int Function(T)? getMaxPages,
+    Iterable<Listenable> dependecies = const [],
+    Duration? debounceDuration,
+    Map<String, dynamic> headers = const {},
+    int maxRetryAttempts = 0,
+    int startPage = 1,
+  }
+);
+```
 
-While for `PaginatedHttpResource<T>` their signatures are `String Function(int) urlBuilder` and `Map<String, dynamic> Function(int)? queryParametersBuilder`, it also has two of its own unique parameters which are:
+Common optional parameters:
+
+- `Iterable<Listenable> dependecies`: When one of the dependencies notifies the http resource, it auto reruns `urlBuilder` and the query builder and then reruns the http request.
+- `Duration? debounceDuration`: Debounces reloads when dependencies update, so a `TextEditingController` can trigger a reload only after the configured idle period.
+- `Map<String, dynamic> headers`: Custom request headers.
+- `int maxRetryAttempts`: Maximum retry count on failure.
+
+`PaginatedHttpResource<T>` also exposes:
 
 - `int Function(T)? getMaxPages` takes the response data and returns the total number of pages available. This is recommended so that the resource automatically stops pagination at the correct page and prevents unnecessary requests
 
@@ -63,11 +88,11 @@ For `PaginatedHttpResource<T>` it exposes `pipePaginated` which has the followin
 **Example:**
 
 ```dart
-PaginatedHttpResource<List<User>> usersResource = PaginatedHttpResource<UsersResponse>(
-  urlBuilder: (page) => 'https://api.example.com/users',
-  queryParametersBuilder: (page) => {'page': page.toString()},
-  transform: (data) => UsersResponse.fromJson(data),
-  getMaxPages: (response) => response.totalPages,
+final usersResource = PaginatedHttpResource<User>(
+  (page) => 'https://api.example.com/users',
+  (data) => User.fromJson(data),
+  (page) => {'page': page.toString()},
+  getMaxPages: (user) => user.totalPages,
   startPage: 1,
 );
 
@@ -87,13 +112,23 @@ Both of these methods return a `Widget`
 
 ## Future resource
 
-A `FutureResource<T>` is used to handle futures in the UI more cleanly it has the following parameters:
+A `FutureResource<T>` is used to handle futures in the UI more cleanly.
 
-1. The future it will run which is of type `Future<T> Function()?`, if null it will stay loading until a future is passed to it through the `runNewFuture` function
+Constructor signature:
 
-2. To preserve the result or not which is a boolean, it defaults to false, if false then when loading a new future or when an error occurs the `result` property returns to null, if true when loading a new future the `result` property does not turn to null, it waits until the new future finishes and then replaces the `result` when an error occurs, the `result` property contains the last successful result and the `error` property contains the error
+```dart
+FutureResource<T>({
+  Future<T> Function()? future,
+  bool perserveResult = false,
+  Future<T>? Function(Object error, int attempt)? retryActionOnError,
+});
+```
 
-3. A function that is run when an error occurs to reattempt, it is optional but will help in retrying. It has a signature of `Future<T>? Function(Object error, int attempt)?`, if the return value is null it will stop reattempting.
+The required work is still passed through the `future` callback when you want the resource to start immediately. The other arguments are optional behavior settings and are named parameters.
+
+- `future`: the initial async work to run, or `null` to keep the resource idle until `runNewFuture()` is called.
+- `perserveResult`: when `true`, the last successful value remains visible while a retry or reload is in progress.
+- `retryOnError`: optional retry callback. Return `null` to stop retrying.
 
 There are 4 properties on a `FutureResource<T>`:
 
@@ -120,23 +155,31 @@ There are 3 methods on a `FutureResource<T>`:
 
 ## Action resource
 
-An `ActionResource<T>` is used to handle actions that are not intiated right as the page starts, for example a login. It has 4 states:
+An `ActionResource<T>` is used to handle actions that are not initiated right as the page starts, for example a login. It has 4 states:
 
 - idle
-
 - loading
-
 - error
-
 - done
 
-It defaults to idle but if a future is passed to it, it will be loading. it has 3 parameters
+Constructor signature:
 
-1. To preserve the result or not which is a boolean, it defaults to false, if false then when loading a new future or when an error occurs the `result` property returns to null, if true when loading a new future the `result` property does not turn to null, it waits until the new future finishes and then replaces the `result` when an error occurs, the `result` property contains the last successful result and the `error` property contains the error
+```dart
+ActionResource<T>({
+  bool perserveResult = false,
+  Future<T>? Function(Object error, int attempt)? retryOnError,
+  Future<T> Function()? future,
+  VoidCallback? onSuccess,
+  VoidCallback? onFailure,
+});
+```
 
-2. A function that is run when an error occurs to reattempt, it is optional but will help in retrying. It has a signature of `Future<T>? Function(Object error, int attempt)?`, if the return value is null it will stop reattempting.
+The action callback is still passed through the named `future` argument when you want the action to begin immediately. The other settings are optional named parameters.
 
-3. The future it will run which is of type `Future<T> Function()?`, if null it will stay idle until a future is passed to it through the `runNewAction` function
+- `perserveResult`: keeps the last successful result while a new attempt is loading.
+- `retryOnError`: optional retry callback for transient failures.
+- `future`: optional initial action to execute immediately.
+- `onSuccess` and `onFailure`: fire after a successful or failed action.
 
 There is a definition for an enum called `ActionStatus`, it has 4 possible states:
 
@@ -317,13 +360,47 @@ Services can contain any type of resource if it needs to be shared across differ
 
 ## Computed resource
 
-`ComputedResource<T>` is a `ValueNotifier<T>` that auto updates its value based on dependencies passed as the second parameter which is an `Iterable<Listenable>`, its parameters are:
+`ComputedResource<T>` is a `ValueNotifier<T>` that auto updates its value based on dependencies passed as the second parameter which is an `Iterable<Listenable>`.
+Constructor signature:
 
-1. The computation itself which is a `T Function()` that computes the value
+```dart
+ComputedResource(
+    T Function() computation,
+    Iterable<Listenable> dependencies, {
+    Duration? debounceDuration,
+  })
+```
 
-2. The dependencies which are a `Iterable<Listenable>` when one of them notifies the computed resource it reruns the computation
+1. `T Function() computation` the function that computes the value
 
-3. An optional debounce `Duration` which makes it that it waits that long before rerunning the computation while listening to any changes from the dependencies
+2. `Iterable<Listenable> dependencies` when one of them notifies the computed resource it reruns the computation
+
+3. `Duration? debounceDuration` which makes it that it waits the duration before rerunning the computation while listening to any changes from the dependencies
+
+## Managed listener mixin
+
+The `ManagedListenerMixin` is a mixin on `State` classes that helps in lifecycle management of listeners `ChangeNotifier` objects it exposes 3 functions
+
+- `addListener(Listenable listenable, void Function() listener)` which adds the listener to the listenable and auto removes it on dispose without manual code in the dispose block
+
+- `bool removeListener(Listenable listenable, void Function() listener)` removes the listener from a listenable if it was on the listener it returns true if not it returns false
+
+- `N manage<N extends ChangeNotifier>(N listenable)` auto disposes change notifiers when the state disposes
+
+```dart
+class _MyWidgetState extends State<MyWidget> with ManagedListenerMixin {
+    late final textEditingController = manage(TextEditingController()); // auto disposes the controller
+
+    @override
+    void initState() {
+        addListener(textEditingController, () {
+            setState(() {});
+        });
+    }
+
+    // Build the widget
+}
+```
 
 #### Extensions on Types
 

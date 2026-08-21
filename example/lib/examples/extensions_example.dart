@@ -10,14 +10,9 @@ class ExtensionsExample extends StatefulWidget {
   State<ExtensionsExample> createState() => _ExtensionsExampleState();
 }
 
-class _ExtensionsExampleState extends State<ExtensionsExample> {
-  final ValueNotifier<int> counter = ValueNotifier<int>(0);
-
-  @override
-  void dispose() {
-    counter.dispose();
-    super.dispose();
-  }
+class _ExtensionsExampleState extends State<ExtensionsExample>
+    with ManagedListenerMixin {
+  late final ValueNotifier<int> counter = manage(ValueNotifier<int>(0));
 
   @override
   Widget build(BuildContext context) {

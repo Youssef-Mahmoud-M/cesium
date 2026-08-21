@@ -61,9 +61,15 @@ class ActionResource<T> extends ValueNotifier<ActionResourceValue<T>> {
   bool _isDisposed = false;
   bool _isRetrying = false;
 
+  /// Callback run when an action succeeds
+  VoidCallback? onSuccess;
+
+  /// Callback run when an action fails
+  VoidCallback? onFailure;
+
   /// A method that is called to retry an action when an error occurs,
   /// if it returns null the last error will used in the error state
-  Future<T>? Function(Object error, int attempt)? retryActionOnError;
+  Future<T>? Function(Object error, int attempt)? retryOnError;
 
   /// Whether the resource is currently loading.
   ActionStatus get status => value.status;
@@ -76,11 +82,14 @@ class ActionResource<T> extends ValueNotifier<ActionResourceValue<T>> {
 
   /// Create an `ActionResource`. If a `future` is provided it will be
   /// started immediately.
-  ActionResource([
-    this._perserveResult = false,
-    this.retryActionOnError,
+  ActionResource({
+    bool perserveResult = false,
+    this.retryOnError,
     Future<T> Function()? future,
-  ]) : super(
+    this.onSuccess,
+    this.onFailure,
+  }) : _perserveResult = perserveResult,
+       super(
          future == null
              ? const ActionResourceValue()
              : const ActionResourceValue.loading(),
@@ -105,13 +114,14 @@ class ActionResource<T> extends ValueNotifier<ActionResourceValue<T>> {
           if (!_isDisposed && !(_operation?.isCanceled ?? true)) {
             _currentAttempt = 0;
             value = ActionResourceValue.value(val);
+            onSuccess?.call();
           }
         })
         .catchError((e) {
           Cesium.logError(e);
           if (!_isDisposed && !(_operation?.isCanceled ?? true)) {
             _currentAttempt++;
-            final newAction = retryActionOnError?.call(e, _currentAttempt);
+            final newAction = retryOnError?.call(e, _currentAttempt);
 
             if (newAction != null) {
               _executeReattempt(() => newAction);
@@ -123,6 +133,7 @@ class ActionResource<T> extends ValueNotifier<ActionResourceValue<T>> {
               e,
               _perserveResult ? result : null,
             );
+            onFailure?.call();
           }
         });
   }

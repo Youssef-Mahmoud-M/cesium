@@ -12,18 +12,25 @@ class ActionResourceExample extends StatefulWidget {
   State<ActionResourceExample> createState() => _ActionResourceExampleState();
 }
 
-class _ActionResourceExampleState extends State<ActionResourceExample> {
-  late final ActionResource<String> resource = ActionResource();
-  late final ActionResource<String> resourcePerserved = ActionResource(true);
-  late final ActionResource<String> resourceReattempt = ActionResource(
-    false,
-    (_, reattempt) => reattemptFutureFunction(reattempt),
+class _ActionResourceExampleState extends State<ActionResourceExample>
+    with ManagedListenerMixin {
+  late final ActionResource<String> resource = manage(ActionResource());
+  late final ActionResource<String> resourcePerserved = manage(
+    ActionResource(perserveResult: true),
   );
-  late final ActionResource<String> perservedResourceReattempt = ActionResource(
-    true,
-    (_, reattempt) => reattemptFutureFunction(reattempt),
+  late final ActionResource<String> resourceReattempt = manage(
+    ActionResource(
+      perserveResult: false,
+      retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
+    ),
   );
-  late final ActionResource<String> failiureResource = ActionResource();
+  late final ActionResource<String> perservedResourceReattempt = manage(
+    ActionResource(
+      perserveResult: true,
+      retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
+    ),
+  );
+  late final ActionResource<String> failiureResource = manage(ActionResource());
 
   Future<String> reattemptFutureFunction(int attempt) async {
     debugPrint("Reattempt $attempt");
@@ -42,16 +49,6 @@ class _ActionResourceExampleState extends State<ActionResourceExample> {
   Future<String> failiureFunction() async {
     await Future.delayed(Duration(seconds: 2));
     throw Exception("Test");
-  }
-
-  @override
-  void dispose() {
-    resource.dispose();
-    resourcePerserved.dispose();
-    resourceReattempt.dispose();
-    perservedResourceReattempt.dispose();
-    failiureResource.dispose();
-    super.dispose();
   }
 
   @override

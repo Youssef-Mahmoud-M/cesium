@@ -42,7 +42,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
 
   /// A method that is called to retry an action when an error occurs,
   /// if it returns null the last error will used in the error state
-  Future<T>? Function(Object error, int attempt)? retryActionOnError;
+  Future<T>? Function(Object error, int attempt)? retryOnError;
 
   /// Whether the resource is currently loading.
   bool get isLoading => value.isLoading;
@@ -55,11 +55,12 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
 
   /// Create a `FutureResource`. If a `future` is provided it will be
   /// started immediately.
-  FutureResource(
-    Future<T> Function()? future, [
-    this._perserveResult = false,
-    this.retryActionOnError,
-  ]) : super(const FutureResourceValue()) {
+  FutureResource({
+    Future<T> Function()? future,
+    bool perserveResult = false,
+    this.retryOnError,
+  }) : _perserveResult = perserveResult,
+       super(const FutureResourceValue()) {
     if (future != null) {
       _startOperation(future());
     }
@@ -86,7 +87,7 @@ class FutureResource<T> extends ValueNotifier<FutureResourceValue<T>> {
           Cesium.logError(e);
           if (!_isDisposed && !(_operation?.isCanceled ?? true)) {
             _currentAttempt++;
-            final newAction = retryActionOnError?.call(e, _currentAttempt);
+            final newAction = retryOnError?.call(e, _currentAttempt);
 
             if (newAction != null) {
               _executeReattempt(() => newAction);

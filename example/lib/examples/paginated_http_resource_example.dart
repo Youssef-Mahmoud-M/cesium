@@ -39,24 +39,21 @@ class PaginatedHttpResourceExample extends StatefulWidget {
 }
 
 class _PaginatedHttpResourceExampleState
-    extends State<PaginatedHttpResourceExample> {
+    extends State<PaginatedHttpResourceExample>
+    with ManagedListenerMixin {
   late final PaginatedHttpResource<Map<String, dynamic>> resource;
 
   @override
   void initState() {
     super.initState();
     cesiumHttpServiceProvider.override(() => FakePaginatedHttpService());
-    resource = PaginatedHttpResource(
-      (_) => 'https://example.com/items',
-      (data) => data as Map<String, dynamic>,
-      (page) => {'page': page},
+    resource = manage(
+      PaginatedHttpResource(
+        (_) => 'https://example.com/items',
+        (data) => data as Map<String, dynamic>,
+        (page) => {'page': page},
+      ),
     );
-  }
-
-  @override
-  void dispose() {
-    resource.dispose();
-    super.dispose();
   }
 
   @override

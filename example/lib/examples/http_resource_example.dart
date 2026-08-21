@@ -12,19 +12,16 @@ class HttpResourceExample extends StatefulWidget {
   State<HttpResourceExample> createState() => _HttpResourceExampleState();
 }
 
-class _HttpResourceExampleState extends State<HttpResourceExample> {
-  final HttpResource<List<String>> coffeeResource = HttpResource(
-    () => 'https://api.sampleapis.com/coffee/hot',
-    (data) => (data as List<dynamic>)
-        .map((e) => (e as Map<String, dynamic>)['title'].toString())
-        .toList(),
+class _HttpResourceExampleState extends State<HttpResourceExample>
+    with ManagedListenerMixin {
+  late final HttpResource<List<String>> coffeeResource = manage(
+    HttpResource(
+      () => 'https://api.sampleapis.com/coffee/hot',
+      (data) => (data as List<dynamic>)
+          .map((e) => (e as Map<String, dynamic>)['title'].toString())
+          .toList(),
+    ),
   );
-
-  @override
-  void dispose() {
-    coffeeResource.dispose();
-    super.dispose();
-  }
 
   Future<void> _reload() async {
     final completer = Completer<void>();

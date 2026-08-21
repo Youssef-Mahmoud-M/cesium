@@ -77,17 +77,12 @@ class ServiceManagementExample extends StatefulWidget {
       _ServiceManagementExampleState();
 }
 
-class _ServiceManagementExampleState extends State<ServiceManagementExample> {
+class _ServiceManagementExampleState extends State<ServiceManagementExample>
+    with ManagedListenerMixin {
   final githubService = gitHubStatsServiceProvider.inject();
-  late final FutureResource<RepoStats> githubResource = FutureResource(
-    githubService.getRepoStats,
+  late final FutureResource<RepoStats> githubResource = manage(
+    FutureResource(future: githubService.getRepoStats),
   );
-
-  @override
-  void dispose() {
-    githubResource.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {

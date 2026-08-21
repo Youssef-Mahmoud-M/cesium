@@ -11,8 +11,9 @@ class CesiumHttpService extends CesiumService {
 
   /// CesiumHttpService constructor, if `_dioBuilder` is provided,
   /// it will be used instead of the default Dio constructor
-  CesiumHttpService([this._dioBuilder])
-    : _dio = _dioBuilder == null ? Dio() : _dioBuilder();
+  CesiumHttpService({Dio Function()? dioBuilder})
+    : _dioBuilder = dioBuilder,
+      _dio = dioBuilder == null ? Dio() : dioBuilder();
 
   /// Access or replace the underlying `BaseOptions` used by `dio`.
   BaseOptions get baseOptions => _dio.options;
