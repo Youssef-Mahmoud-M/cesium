@@ -213,7 +213,39 @@ final http = ServiceProvider.withOverride(
 );
 ```
 
-### 6. Widget piping helpers
+### 6. Handling actions with `ActionResource<T>`
+
+You can handle actions cleanly with action resource instead of tracking state manually
+
+```dart
+// 1. Declare an ActionResource (with optional value preservation or retry logic)
+final loginAction = ActionResource<User>(true);
+
+// 2. Trigger async work
+loginAction.runNewAction(() => authService.login(email, password));
+
+// 3. Bind UI & buttons directly to state
+Widget build(BuildContext context) {
+  return Column(
+    children: [
+      loginAction.pipe((context, state) => switch (state.status) {
+        ActionStatus.idle => const Text('Please log in'),
+        ActionStatus.loading => const CircularProgressIndicator(),
+        ActionStatus.error => Text('Error: ${state.error}'),
+        ActionStatus.done => Text('Welcome, ${state.value.name}!'),
+      }),
+      loginAction.pipeButton(
+        buttonBuilder: (context, status, _) => ElevatedButton(
+          onPressed: status == ActionStatus.loading ? null : submit,
+          child: const Text('Submit'),
+        ),
+      ),
+    ],
+  );
+}
+```
+
+### 7. Widget piping helpers
 
 ```dart
 final notifier = ValueNotifier<String>('hello');
