@@ -47,6 +47,10 @@ Common optional parameters:
 
 - `int startPage` determines which page to start from and to reset to when reload is called on the resource or when one of the dependencies change
 
+Both resources expose a `reload` function which reloads the request and resets the page for `PaginatedHttpResource`
+
+`PaginatedHttpResource` exposes a `loadMore` function that loads the next page if there is one
+
 ### Piping into UI
 
 For `HttpResource<T>`, it is recommended to use `pipe` whenever the loading state does not need progress as it is better in terms of performance. it has the following parameters:
@@ -330,15 +334,18 @@ class UserService extends CesiumService {
     _currentUserNotifier.value = FutureResourceValue();
   }
 }
+
+// Usage
+service.currentUserNotifier.pipe(
+  loading: (context) => const CircularProgressIndicator(),
+  error: (context, error) => Text('Error: $error'),
+  value: (context, user) => Text('Welcome, ${user.name}'),
+);
 ```
 
 ### Error handling
 
-Both `HttpResource` and services should handle errors gracefully:
-
-- **HttpResource errors** are passed to the `error` callback in `pipe`/`pipeProgress`/`pipePaginated`. The error object contains the exception that was thrown during the request.
-
-- **Service errors** are automatically caught by `FutureResource` and passed to the `error` callback. For services with cached data, catch errors in the service method and update the `ValueNotifier` with `FutureResourceValue.error()`
+Errors are automatically caught by `FutureResource` and passed to the `error` callback. For services with cached data, catch errors in the service method and update the `ValueNotifier` with `FutureResourceValue.error()`
 
 **Error handling example:**
 
@@ -407,12 +414,6 @@ class _MyWidgetState extends State<MyWidget> with ManagedListenerMixin {
 Cesium provides convenient extensions on existing Flutter types like `ValueNotifier<T>`, `Listenable`, and `List<Listenable>` to help you render widgets into the tree with minimal boilerplate.
 
 ### 1. `ValueNotifier<T>` Extensions
-
-- `pipe`: Takes a `Widget Function(BuildContext context, T value)` builder and wraps the notifier in a `ValueListenableBuilder<T>`.
-
-- `pipeChild`: Like `pipe`, but takes an optional static `Widget? child` parameter. The child widget is passed to the builder and is **not** rebuilt when the `ValueNotifier` updates, which is great for performance optimization.
-
-Cesium provides many extensions on existing flutter types. For `ValueNotifier<T>` there are two extensions:
 
 - `pipe` which takes a `Widget Function(BuildContext, T)` as its builder. It just makes a `ValueListenableBuilder<T>` and passes the builder to it.
 
