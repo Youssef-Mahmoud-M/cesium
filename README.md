@@ -57,9 +57,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late final FutureResource<Map<String, dynamic>> profile = FutureResource(
+  late final FutureResource<Map<String, dynamic>> profile = manage(FutureResource(
     future: () => fetchProfile(),
-  );
+  ));
 
   Future<Map<String, dynamic>> fetchProfile() async {
     await Future.delayed(const Duration(milliseconds: 500));
@@ -73,12 +73,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       error: (_, error) => Center(child: Text('Error: $error')),
       value: (context, data) => Center(child: Text(data['name'])),
     );
-  }
-
-  @override
-  void dispose() {
-    profile.dispose();
-    super.dispose();
   }
 }
 ```
@@ -258,6 +252,49 @@ final notifier = ValueNotifier<String>('hello');
 final widget = notifier.pipe(
   (context, value) => Text(value),
 );
+```
+
+### 8. Automatic disposing of resources and notifiers
+By injecting the `ManagedListenerMixin` you can automatically dispose resource or notifiers by wrapping them in `manage` or automatically remove listeners
+
+```dart
+import 'package:cesium/cesium.dart';
+import 'package:flutter/material.dart';
+
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key, required this.otherNotifier});
+  final ValueNotifier<int> otherNotifier;
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late final FutureResource<Map<String, dynamic>> profile = manage(FutureResource(
+    future: () => fetchProfile(),
+  )); // It is automatically disposed
+  late final notifier = manage(ValueNotifier<int>(0)); // It is automatically disposed
+
+  @override
+  void initState() {
+    super.initState();
+    addListener(widget.otherNotifier, () {/* Do something */}); //The listener is automatically removed when the widget disposes
+  }
+
+  Future<Map<String, dynamic>> fetchProfile() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return {'name': 'Ada Lovelace'};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return profile.pipe(
+      loading: (_) => const Center(child: CircularProgressIndicator()),
+      error: (_, error) => Center(child: Text('Error: $error')),
+      value: (context, data) => Center(child: Text(data['name'])),
+    );
+  }
+}
 ```
 
 The library also includes `pipeChild` helpers for reusing a static child widget while only rebuilding the dynamic portion of the UI.

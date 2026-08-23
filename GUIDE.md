@@ -395,7 +395,7 @@ class _MyWidgetState extends State<MyWidget> with ManagedListenerMixin {
     void initState() {
         addListener(textEditingController, () {
             setState(() {});
-        });
+        }); // Automatically remove the listener on dispose
     }
 
     // Build the widget
