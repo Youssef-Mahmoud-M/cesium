@@ -255,7 +255,7 @@ final widget = notifier.pipe(
 ```
 
 ### 8. Automatic disposing of resources and notifiers
-By injecting the `ManagedListenerMixin` you can automatically dispose resource or notifiers by wrapping them in `manage` or automatically remove listeners
+By adding the `ManagedListenerMixin` you can automatically dispose resource or notifiers by wrapping them in `manage` or automatically remove listeners
 
 ```dart
 import 'package:cesium/cesium.dart';
@@ -269,7 +269,7 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with ManagedListenerMixin {
   late final FutureResource<Map<String, dynamic>> profile = manage(FutureResource(
     future: () => fetchProfile(),
   )); // It is automatically disposed
