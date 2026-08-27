@@ -53,12 +53,10 @@ class _HttpResourceRetryExampleState extends State<HttpResourceRetryExample>
   void initState() {
     super.initState();
     cesiumHttpServiceProvider.override(() => FakeRetryHttpService());
-    resource = manage(
-      HttpResource(
-        () => 'https://example.com/items',
-        (data) => data as Map<String, dynamic>,
-        maxRetryAttempts: 3,
-      ),
+    resource = httpResource(
+      () => 'https://example.com/items',
+      (data) => data as Map<String, dynamic>,
+      maxRetryAttempts: 3,
     );
   }
 

@@ -14,37 +14,32 @@ class FutureResourceExample extends StatefulWidget {
 
 class _FutureResourceExampleState extends State<FutureResourceExample>
     with ManagedListenerMixin {
-  late final FutureResource<String> resource = manage(
-    FutureResource(future: futureFunction),
+  late final FutureResource<String> resource = futureResource(
+    future: futureFunction,
   );
-  late final FutureResource<String> resourcePerserved = manage(
-    FutureResource(future: futureFunction, perserveResult: true),
+  late final FutureResource<String> resourcePerserved = futureResource(
+    future: futureFunction,
+    perserveResult: true,
   );
-  late final FutureResource<String> resourceReattempt = manage(
-    FutureResource(
-      future: () async {
-        throw Exception("Test");
-      },
-      perserveResult: false,
-      retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
-    ),
+  late final FutureResource<String> resourceReattempt = futureResource(
+    future: () async {
+      throw Exception("Test");
+    },
+    perserveResult: false,
+    retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
   );
-  late final FutureResource<String> perservedResourceReattempt = manage(
-    FutureResource(
-      future: () async {
-        throw Exception("Test");
-      },
-      perserveResult: true,
-      retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
-    ),
+  late final FutureResource<String> perservedResourceReattempt = futureResource(
+    future: () async {
+      throw Exception("Test");
+    },
+    perserveResult: true,
+    retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
   );
-  late final FutureResource<String> failiureResource = manage(
-    FutureResource(
-      future: () async {
-        await Future.delayed(Duration(seconds: 3));
-        throw Exception("Test");
-      },
-    ),
+  late final FutureResource<String> failiureResource = futureResource(
+    future: () async {
+      await Future.delayed(Duration(seconds: 3));
+      throw Exception("Test");
+    },
   );
 
   Future<String> reattemptFutureFunction(int attempt) async {

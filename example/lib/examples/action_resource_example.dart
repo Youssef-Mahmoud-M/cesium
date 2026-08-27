@@ -14,23 +14,19 @@ class ActionResourceExample extends StatefulWidget {
 
 class _ActionResourceExampleState extends State<ActionResourceExample>
     with ManagedListenerMixin {
-  late final ActionResource<String> resource = manage(ActionResource());
-  late final ActionResource<String> resourcePerserved = manage(
-    ActionResource(perserveResult: true),
+  late final ActionResource<String> resource = actionResource();
+  late final ActionResource<String> resourcePerserved = actionResource(
+    perserveResult: true,
   );
-  late final ActionResource<String> resourceReattempt = manage(
-    ActionResource(
-      perserveResult: false,
-      retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
-    ),
+  late final ActionResource<String> resourceReattempt = actionResource(
+    perserveResult: false,
+    retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
   );
-  late final ActionResource<String> perservedResourceReattempt = manage(
-    ActionResource(
-      perserveResult: true,
-      retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
-    ),
+  late final ActionResource<String> perservedResourceReattempt = actionResource(
+    perserveResult: true,
+    retryOnError: (_, reattempt) => reattemptFutureFunction(reattempt),
   );
-  late final ActionResource<String> failiureResource = manage(ActionResource());
+  late final ActionResource<String> failiureResource = actionResource();
 
   Future<String> reattemptFutureFunction(int attempt) async {
     debugPrint("Reattempt $attempt");

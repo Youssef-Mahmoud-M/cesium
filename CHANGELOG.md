@@ -62,3 +62,7 @@ Initial release with the following features:
 - Moved all constructors to have named parameters
 - Added manage function in ManagedListenerMixin
 - Added onSuccess and onFailure to ActionResource
+
+## 2.1.0
+
+- Added convenience methods to ManagedListenerMixin to avoid verbose construction of controllers and resources

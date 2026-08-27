@@ -34,7 +34,7 @@ PaginatedHttpResource<T>(
 );
 ```
 
-Common optional parameters:
+Common optional paramaters:
 
 - `Iterable<Listenable> dependecies`: When one of the dependencies notifies the http resource, it auto reruns `urlBuilder` and the query builder and then reruns the http request.
 - `Duration? debounceDuration`: Debounces reloads when dependencies update, so a `TextEditingController` can trigger a reload only after the configured idle period.
@@ -386,23 +386,49 @@ ComputedResource(
 
 ## Managed listener mixin
 
-The `ManagedListenerMixin` is a mixin on `State` classes that helps in lifecycle management of listeners `ChangeNotifier` objects it exposes 3 functions
+The `ManagedListenerMixin` is a mixin on `State` classes that helps in lifecycle management of listeners, `ChangeNotifier` objects, and `StreamSubscription` instances. It exposes the following core functions and convenience constructors:
 
-- `addListener(Listenable listenable, void Function() listener)` which adds the listener to the listenable and auto removes it on dispose without manual code in the dispose block
+**Core Management Functions**
 
-- `bool removeListener(Listenable listenable, void Function() listener)` removes the listener from a listenable if it was on the listener it returns true if not it returns false
+* `addListener(Listenable listenable, void Function() listener)` — Adds the listener to the listenable and automatically removes it on `dispose()` without manual cleanup code.
+* `bool removeListener(Listenable listenable, void Function() listener)` — Manually removes a tracked listener prior to state disposal. Returns `true` if removed, or `false` if not found.
+* `N manage<N extends ChangeNotifier>(N listenable)` — Auto-disposes any `ChangeNotifier` subclass when the widget state disposes.
+* `StreamSubscription<T> manageSubscription<T>(StreamSubscription<T> subscription)` — Auto-cancels a `StreamSubscription` when the widget state disposes.
 
-- `N manage<N extends ChangeNotifier>(N listenable)` auto disposes change notifiers when the state disposes
+**Core Flutter Convenience Builders**
+
+* `value<T>(T value)` — Creates a managed `ValueNotifier<T>`.
+* `textController({String? text})` — Creates a managed `TextEditingController`.
+* `scrollController({...})` — Creates a managed `ScrollController`.
+* `pageController({...})` — Creates a managed `PageController`.
+* `animationController({required TickerProvider vsync, ...})` — Creates a managed `AnimationController`.
+* `focusNode({...})` — Creates a managed `FocusNode`.
+* `tabController({required int length, required TickerProvider vsync, ...})` — Creates a managed `TabController`.
+* `transformationController([Matrix4? value])` — Creates a managed `TransformationController`.
+* `undoHistoryController({UndoHistoryValue? value})` — Creates a managed `UndoHistoryController`.
+
+**Cesium Resource Builders**
+
+* `futureResource<T>({...})` — Creates a managed `FutureResource<T>`.
+* `httpResource<T>(urlBuilder, transform, {...})` — Creates a managed `HttpResource<T>`.
+* `paginatedHttpResource<T>(urlBuilder, transform, queryParamatersBuilder, {...})` — Creates a managed `PaginatedHttpResource<T>`.
+* `actionResource<T>({...})` — Creates a managed `ActionResource<T>`.
+* `computedResource<T>(computation, dependencies, {...})` — Creates a managed `ComputedResource<T>`.
 
 ```dart
-class _MyWidgetState extends State<MyWidget> with ManagedListenerMixin {
-    late final textEditingController = manage(TextEditingController()); // auto disposes the controller
+class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin, ManagedListenerMixin {
+    late final textEditingController = textController(text: 'Hello'); // Auto-disposed
+    late final scroll = scrollController();                           // Auto-disposed
+    late final anim = animationController(vsync: this);               // Auto-disposed
 
     @override
     void initState() {
+        super.initState();
+
+        // Automatically removed on dispose
         addListener(textEditingController, () {
             setState(() {});
-        }); // Automatically remove the listener on dispose
+        });
     }
 
     // Build the widget

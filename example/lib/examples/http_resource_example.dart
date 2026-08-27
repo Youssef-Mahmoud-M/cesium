@@ -14,13 +14,11 @@ class HttpResourceExample extends StatefulWidget {
 
 class _HttpResourceExampleState extends State<HttpResourceExample>
     with ManagedListenerMixin {
-  late final HttpResource<List<String>> coffeeResource = manage(
-    HttpResource(
-      () => 'https://api.sampleapis.com/coffee/hot',
-      (data) => (data as List<dynamic>)
-          .map((e) => (e as Map<String, dynamic>)['title'].toString())
-          .toList(),
-    ),
+  late final HttpResource<List<String>> coffeeResource = httpResource(
+    () => 'https://api.sampleapis.com/coffee/hot',
+    (data) => (data as List<dynamic>)
+        .map((e) => (e as Map<String, dynamic>)['title'].toString())
+        .toList(),
   );
 
   Future<void> _reload() async {

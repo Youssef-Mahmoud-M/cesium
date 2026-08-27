@@ -13,9 +13,10 @@ class ComputedResourceExample extends StatefulWidget {
 
 class _ComputedResourceExampleState extends State<ComputedResourceExample>
     with ManagedListenerMixin {
-  late final ValueNotifier<int> counter = manage(ValueNotifier<int>(0));
-  late final ComputedResource<String> computed = manage(
-    ComputedResource(() => 'Value is ${counter.value}', [counter]),
+  late final ValueNotifier<int> counter = value(0);
+  late final ComputedResource<String> computed = computedResource(
+    () => 'Value is ${counter.value}',
+    [counter],
   );
 
   @override

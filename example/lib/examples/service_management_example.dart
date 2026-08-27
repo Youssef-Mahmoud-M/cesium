@@ -80,8 +80,8 @@ class ServiceManagementExample extends StatefulWidget {
 class _ServiceManagementExampleState extends State<ServiceManagementExample>
     with ManagedListenerMixin {
   final githubService = gitHubStatsServiceProvider.inject();
-  late final FutureResource<RepoStats> githubResource = manage(
-    FutureResource(future: githubService.getRepoStats),
+  late final FutureResource<RepoStats> githubResource = futureResource(
+    future: githubService.getRepoStats,
   );
 
   @override

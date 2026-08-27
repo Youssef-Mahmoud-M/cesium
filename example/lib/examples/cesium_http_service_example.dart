@@ -55,9 +55,7 @@ class CesiumHttpServiceExample extends StatefulWidget {
 class _CesiumHttpServiceExampleState extends State<CesiumHttpServiceExample>
     with ManagedListenerMixin {
   final DataSubmissionService _service = dataSubmissionServiceProvider.inject();
-  late final TextEditingController _controller = manage(
-    TextEditingController(),
-  );
+  late final TextEditingController _controller = textController();
 
   @override
   Widget build(BuildContext context) {

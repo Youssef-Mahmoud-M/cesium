@@ -12,7 +12,7 @@ class ExtensionsExample extends StatefulWidget {
 
 class _ExtensionsExampleState extends State<ExtensionsExample>
     with ManagedListenerMixin {
-  late final ValueNotifier<int> counter = manage(ValueNotifier<int>(0));
+  late final ValueNotifier<int> counter = value(0);
 
   @override
   Widget build(BuildContext context) {
