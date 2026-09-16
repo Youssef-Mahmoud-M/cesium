@@ -105,6 +105,12 @@ class ServiceProvider<T extends CesiumService> {
     return injectService<T>();
   }
 
+  /// reset the service before injecting it, this should be used carefully as it can lead to weird behaviour
+  T resetAndInject() {
+    resetService<T>();
+    return injectService<T>();
+  }
+
   /// Reset the underlying service instance.
   void reset() {
     resetService<T>();

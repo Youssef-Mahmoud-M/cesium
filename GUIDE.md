@@ -254,6 +254,7 @@ Services are classes that extend `CesiumService` so that they can be handled by 
    
    //Later on injected using
    final service = testServiceProvider.inject();
+   // To reset right before injecting use .resetAndInject()
    ```
 
 The second approach is more recommended as it makes it easier to use services in tests.

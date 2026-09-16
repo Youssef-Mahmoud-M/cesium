@@ -66,3 +66,7 @@ Initial release with the following features:
 ## 2.1.0
 
 - Added convenience methods to ManagedListenerMixin to avoid verbose construction of controllers and resources
+
+## 2.1.1
+
+- Added resetAndInject to service provider to reset before injection
