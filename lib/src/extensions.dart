@@ -1,4 +1,4 @@
-import 'package:cesium/src/future_resource.dart';
+import 'package:cesium/cesium.dart';
 import 'package:flutter/widgets.dart';
 
 /// Extensions to make it concise to render `ValueNotifier` values in the
@@ -90,5 +90,60 @@ extension CesiumListenableListX on List<Listenable> {
       builder: builder,
       child: child,
     );
+  }
+}
+
+/// Extensions to make it concise to render `Stream` values in the widget tree.
+extension CesiumStreamX<T> on Stream<T> {
+  /// Builds a `StreamBuilder` that separates handling based on the stream's
+  /// current [ConnectionState], providing explicit builder callbacks for
+  /// [ConnectionState.none], [ConnectionState.waiting], [ConnectionState.active],
+  /// and [ConnectionState.done].
+  ///
+  /// [noneBuilder] falls back to [waitingBuilder] and [doneBuilder] falls back
+  /// to [activeBuilder] when they are not provided.
+  StreamBuilder<T> pipeSeparated({
+    Widget Function(BuildContext, Object?)? errorBuilder,
+    Widget Function(BuildContext, T?)? noneBuilder,
+    required Widget Function(BuildContext, T?) waitingBuilder,
+    required Widget Function(BuildContext, T?) activeBuilder,
+    Widget Function(BuildContext, T?)? doneBuilder,
+  }) {
+    final none = noneBuilder ?? waitingBuilder;
+    final done = doneBuilder ?? activeBuilder;
+    return StreamBuilder<T>(
+      stream: this,
+      builder: (context, snapshot) {
+        if (snapshot.hasError && errorBuilder != null) {
+          return errorBuilder(context, snapshot.error);
+        }
+        return switch (snapshot.connectionState) {
+          ConnectionState.none => none(context, snapshot.data),
+          ConnectionState.waiting => waitingBuilder(context, snapshot.data),
+          ConnectionState.active => activeBuilder(context, snapshot.data),
+          ConnectionState.done => done(context, snapshot.data),
+        };
+      },
+    );
+  }
+
+  /// Build a standard `StreamBuilder` wired to this stream.
+  StreamBuilder<T> pipeSingle(
+    Widget Function(BuildContext, AsyncSnapshot<T>) builder,
+  ) {
+    return StreamBuilder<T>(stream: this, builder: builder);
+  }
+
+  /// Build an `AggregatedStreamBuilder` that accumulates all emitted data and errors
+  /// from this stream into a historical list.
+  AggregatedStreamBuilder<T> pipeAggregated(
+    Widget Function(
+      BuildContext context,
+      List<StreamOption<T>> data,
+      ConnectionState connectionState,
+    )
+    builder,
+  ) {
+    return AggregatedStreamBuilder<T>(stream: this, builder: builder);
   }
 }

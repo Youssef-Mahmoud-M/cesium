@@ -70,3 +70,11 @@ Initial release with the following features:
 ## 2.1.1
 
 - Added resetAndInject to service provider to reset before injection
+
+## 2.2.0
+
+- Added `Stream` extensions: `pipeSingle`, `pipeSeparated` (with optional `noneBuilder`/`doneBuilder` fallbacks) and `pipeAggregated`
+- Added `AggregatedStreamBuilder` and `StreamOption` to render the full history of a stream's data and errors
+- Added `listen` to `ManagedListenerMixin` to auto-cancel stream subscriptions on dispose
+- Added `disposeEarly`, `disposeAnimationEarly` and `cancelEarly` to `ManagedListenerMixin` to release managed objects before disposal
+- Added `factory` getter to `ServiceProvider`

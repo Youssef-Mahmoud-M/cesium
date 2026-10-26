@@ -77,6 +77,11 @@ class ServiceProvider<T extends CesiumService> {
   /// Whether an override factory has been registered for this provider.
   bool get registeredOverride => _registeredOverride;
 
+  /// Gets the factory function for the service, if the service has an override it returns the override
+  T Function() get factory {
+    return _factories[T]! as T Function();
+  }
+
   /// Create a `ServiceProvider` and register the primary factory.
   ServiceProvider(T Function() factory) {
     register<T>(factory);

@@ -255,6 +255,10 @@ Services are classes that extend `CesiumService` so that they can be handled by 
    //Later on injected using
    final service = testServiceProvider.inject();
    // To reset right before injecting use .resetAndInject()
+
+   // To build a fresh, non-singleton instance use the factory getter.
+   // It returns the override factory if one was registered.
+   final standalone = testServiceProvider.factory();
    ```
 
 The second approach is more recommended as it makes it easier to use services in tests.
@@ -394,7 +398,16 @@ The `ManagedListenerMixin` is a mixin on `State` classes that helps in lifecycle
 * `addListener(Listenable listenable, void Function() listener)` — Adds the listener to the listenable and automatically removes it on `dispose()` without manual cleanup code.
 * `bool removeListener(Listenable listenable, void Function() listener)` — Manually removes a tracked listener prior to state disposal. Returns `true` if removed, or `false` if not found.
 * `N manage<N extends ChangeNotifier>(N listenable)` — Auto-disposes any `ChangeNotifier` subclass when the widget state disposes.
-* `StreamSubscription<T> manageSubscription<T>(StreamSubscription<T> subscription)` — Auto-cancels a `StreamSubscription` when the widget state disposes.
+* `M manageAnimation<M extends AnimationController>(M animation)` — Auto-disposes an `AnimationController` when the widget state disposes.
+* `StreamSubscription<T> listen<T>(Stream<T> stream, {onData, onError, onDone, cancelOnError})` — Subscribes to the stream and auto-cancels the subscription when the widget state disposes. It takes the same callbacks as `Stream.listen`.
+
+**Early Disposal Functions**
+
+Sometimes a managed object needs to go away before the widget does (e.g. switching to a different stream). These functions release the object immediately and stop tracking it, so it is not disposed twice. Each returns `true` if the object was managed and released, or `false` otherwise.
+
+* `bool disposeEarly(ChangeNotifier listenable)` — Disposes a notifier that was registered with `manage` (or any convenience builder). Listeners added to it with `addListener` are dropped from tracking too.
+* `bool disposeAnimationEarly(AnimationController animation)` — Disposes an animation controller registered with `manageAnimation` or `animationController`. Listeners added to it with `addListener` are dropped from tracking too.
+* `bool cancelEarly(StreamSubscription subscription)` — Cancels a subscription created with `listen`.
 
 **Core Flutter Convenience Builders**
 
@@ -422,6 +435,8 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
     late final scroll = scrollController();                           // Auto-disposed
     late final anim = animationController(vsync: this);               // Auto-disposed
 
+    late StreamSubscription<int> ticks;
+
     @override
     void initState() {
         super.initState();
@@ -430,6 +445,16 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
         addListener(textEditingController, () {
             setState(() {});
         });
+
+        // Automatically canceled on dispose
+        ticks = listen(
+            Stream.periodic(const Duration(seconds: 1), (i) => i),
+            onData: (tick) => debugPrint('tick $tick'),
+        );
+    }
+
+    void stopTicking() {
+        cancelEarly(ticks); // Canceled now and no longer tracked
     }
 
     // Build the widget
@@ -438,7 +463,7 @@ class _MyWidgetState extends State<MyWidget> with SingleTickerProviderStateMixin
 
 #### Extensions on Types
 
-Cesium provides convenient extensions on existing Flutter types like `ValueNotifier<T>`, `Listenable`, and `List<Listenable>` to help you render widgets into the tree with minimal boilerplate.
+Cesium provides convenient extensions on existing Flutter types like `ValueNotifier<T>`, `Listenable`, `List<Listenable>`, and `Stream<T>` to help you render widgets into the tree with minimal boilerplate.
 
 ### 1. `ValueNotifier<T>` Extensions
 
@@ -480,7 +505,7 @@ service.currentUserNotifier.pipe(
 );
 ```
 
-3. `Listenable` and `List<Listenable>` Extensions
+### 3. `Listenable` and `List<Listenable>` Extensions
 
 You can also pipe generic `Listenable` objects (like a `ChangeNotifier`) or a list of multiple listenables merged via `Listenable.merge`:
 
@@ -493,3 +518,67 @@ myChangeNotifier.pipe((context) => Text('Notified!'));
 ```
 
 Both generic `Listenable` extensions also provide a `pipeChild` variant for forwarding a static unbuilding child widget.
+
+### 4. `Stream<T>` Extensions
+
+Streams can be piped into the widget tree the same way as notifiers:
+
+- `pipeSingle` takes a `Widget Function(BuildContext, AsyncSnapshot<T>)` and wraps it in a standard `StreamBuilder<T>`. Use it when you want full control over the snapshot.
+
+- `pipeSeparated` splits the build by `ConnectionState`. It takes required `waitingBuilder` and `activeBuilder` callbacks and optional `noneBuilder` (falls back to `waitingBuilder`) and `doneBuilder` (falls back to `activeBuilder`), each receiving the latest value (`T?`), plus an optional `errorBuilder` that receives the error. When `errorBuilder` is provided it takes priority whenever the snapshot has an error; otherwise the connection state builder is used.
+
+- `pipeAggregated` builds an `AggregatedStreamBuilder<T>` which keeps the **whole history** of the stream instead of only the latest event. The builder receives a `List<StreamOption<T>>` and the current `ConnectionState`.
+
+**Example:**
+
+```dart
+final Stream<int> counter = counterService.stream;
+
+// Raw snapshot
+counter.pipeSingle((context, snapshot) {
+  if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+  if (!snapshot.hasData) return const SizedBox.shrink();
+  return Text('Current value: ${snapshot.data}');
+});
+
+// One builder per connection state
+counter.pipeSeparated(
+  errorBuilder: (context, error) => Text('Error: $error'),
+  noneBuilder: (context, _) => const SizedBox.shrink(),
+  waitingBuilder: (context, _) => const CircularProgressIndicator(),
+  activeBuilder: (context, value) => Text('Current value: $value'),
+  doneBuilder: (context, value) => Text('Finished at $value'),
+);
+
+// Every event the stream has emitted so far
+counter.pipeAggregated(
+  (context, events, connectionState) => Column(
+    children: [
+      for (final event in events)
+        event.hasError
+            ? Text('Error: ${event.error}')
+            : Text('Value: ${event.data}'),
+      if (connectionState == ConnectionState.done) const Text('Done'),
+    ],
+  ),
+);
+```
+
+#### `AggregatedStreamBuilder<T>` and `StreamOption<T>`
+
+`AggregatedStreamBuilder<T>` can also be used directly as a widget:
+
+```dart
+AggregatedStreamBuilder<Message>(
+  stream: chatService.messages,
+  builder: (context, messages, connectionState) => ListView(
+    children: [for (final m in messages) MessageTile(option: m)],
+  ),
+);
+```
+
+- Each data event is stored as `StreamOption.data(value)` and each error as `StreamOption.error(error)`, so errors do not stop the stream from being collected (`cancelOnError` is `false`).
+- Use `option.hasError` to tell them apart rather than checking `option.data != null`, since `T` itself may be nullable.
+- The connection state starts as `waiting`, becomes `active` on the first event and `done` when the stream closes.
+- If the widget is rebuilt with a **different** stream instance, the old subscription is canceled and the history is cleared. Create the stream once (e.g. in a service or in `State`) instead of inside `build`, otherwise the history resets on every rebuild.
+- The history is kept in memory for the lifetime of the widget, so prefer it for bounded streams (logs, chat sessions, progress events) rather than high-frequency infinite streams.

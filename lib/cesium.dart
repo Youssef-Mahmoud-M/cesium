@@ -18,3 +18,4 @@ export './src/error_logger.dart';
 export './src/managed_listener_mixin.dart';
 export './src/cesium_http_service.dart';
 export './src/action_resource.dart';
+export './src/aggregated_stream_builder.dart';

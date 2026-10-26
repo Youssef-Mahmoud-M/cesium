@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cesium/cesium.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +9,7 @@ mixin ManagedListenerMixin<W extends StatefulWidget> on State<W> {
   final Map<Listenable, List<VoidCallback>> _addedListeners = {};
   final Set<ChangeNotifier> _managedListenables = {};
   final Set<AnimationController> _managedAnimations = {};
+  final Set<StreamSubscription> _managedSubscriptions = {};
 
   /// Add a listener to [listenable] and track it so it is removed on
   /// `dispose()`.
@@ -39,6 +42,60 @@ mixin ManagedListenerMixin<W extends StatefulWidget> on State<W> {
   T manageAnimation<T extends AnimationController>(T animation) {
     _managedAnimations.add(animation);
     return animation;
+  }
+
+  /// Listens to a [Stream] and tracks the [StreamSubscription] so it can be
+  /// automatically canceled when the widget is disposed.
+  StreamSubscription<T> listen<T>(
+    Stream<T> stream, {
+    void Function(T event)? onData,
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    final subscription = stream.listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
+    _managedSubscriptions.add(subscription);
+    return subscription;
+  }
+
+  /// Disposes a managed [ChangeNotifier] early, before widget disposal,
+  /// and removes it from tracking. Returns `true` if successfully disposed.
+  /// Listeners added to it via [addListener] are no longer tracked.
+  bool disposeEarly(ChangeNotifier listenable) {
+    if (_managedListenables.remove(listenable)) {
+      _addedListeners.remove(listenable);
+      listenable.dispose();
+      return true;
+    }
+    return false;
+  }
+
+  /// Disposes a managed [AnimationController] early, before widget disposal,
+  /// and removes it from tracking. Returns `true` if successfully disposed.
+  /// Listeners added to it via [addListener] are no longer tracked.
+  bool disposeAnimationEarly(AnimationController animation) {
+    if (_managedAnimations.remove(animation)) {
+      _addedListeners.remove(animation);
+      animation.dispose();
+      return true;
+    }
+    return false;
+  }
+
+  /// Cancels a managed [StreamSubscription] early, before widget disposal,
+  /// and removes it from tracking. Returns `true` if successfully canceled.
+  bool cancelEarly(StreamSubscription subscription) {
+    if (_managedSubscriptions.contains(subscription)) {
+      subscription.cancel();
+      _managedSubscriptions.remove(subscription);
+      return true;
+    }
+    return false;
   }
 
   /// A more concise way to write a managed [ValueNotifier]
@@ -287,6 +344,11 @@ mixin ManagedListenerMixin<W extends StatefulWidget> on State<W> {
       animation.dispose();
     }
     _managedAnimations.clear();
+
+    for (final streamSubscription in _managedSubscriptions) {
+      streamSubscription.cancel();
+    }
+    _managedSubscriptions.clear();
 
     super.dispose();
   }

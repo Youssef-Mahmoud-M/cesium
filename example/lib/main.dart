@@ -2,6 +2,7 @@
 
 import 'package:cesium_example/examples/action_resource_example.dart';
 import 'package:cesium_example/examples/http_resource_retry_example.dart';
+import 'package:cesium_example/examples/stream_management_example.dart';
 import 'package:flutter/material.dart';
 import 'examples/service_management_example.dart';
 import 'examples/computed_resource_example.dart';
@@ -43,6 +44,7 @@ class ExampleList extends StatelessWidget {
       {'PaginatedHttpResource': () => const PaginatedHttpResourceExample()},
       {'ManagedListenerMixin': () => const ManagedListenerExample()},
       {'CesiumHttpService': () => const CesiumHttpServiceExample()},
+      {'Streams': () => const StreamManagementExample()},
     ];
 
     return Scaffold(

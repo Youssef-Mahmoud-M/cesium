@@ -18,8 +18,9 @@ Check out the official [Cesium Guide & Best Practices](https://github.com/Yousse
 - `CesiumHttpService` for injectable HTTP clients with base options, interceptors, and reset support for testing
 - `HttpResourceBase` to unify request execution, debounce behavior, dependency tracking, and HTTP progress updates
 - `CesiumService` base type plus override/reset helpers for dependency injection and test isolation
-- `ManagedListenerMixin` to make listener cleanup easier in stateful widgets
+- `ManagedListenerMixin` to make listener, notifier, and stream subscription cleanup easier in stateful widgets
 - Fluent listenable extensions for building widgets directly from resources and notifiers
+- `Stream` extensions (`pipeSingle`, `pipeSeparated`, `pipeAggregated`) and `AggregatedStreamBuilder<T>` for rendering streams, including their full event history
 - Centralized error handling via `Cesium.logError()` and `Cesium.setErrorHandler()`
 
 ## Installation
@@ -28,7 +29,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  cesium: ^2.1.1
+  cesium: ^2.2.0
 ```
 
 Then import it in your Dart code:
@@ -210,6 +211,12 @@ final http = ServiceProvider.withOverride(
 );
 ```
 
+`ServiceProvider` also exposes `factory`, the currently registered factory (the override if there is one), for creating a standalone instance outside the singleton:
+
+```dart
+final freshClient = http.factory();
+```
+
 ### 6. Handling actions with `ActionResource<T>`
 
 You can handle actions cleanly with action resource instead of tracking state manually
@@ -254,6 +261,32 @@ final widget = notifier.pipe(
 );
 ```
 
+Streams get the same treatment:
+
+```dart
+// A plain StreamBuilder
+stream.pipeSingle((context, snapshot) => Text('${snapshot.data}'));
+
+// One builder per ConnectionState, with an optional errorBuilder
+stream.pipeSeparated(
+  errorBuilder: (context, error) => Text('Error: $error'),
+  noneBuilder: (context, _) => const SizedBox.shrink(),
+  waitingBuilder: (context, _) => const CircularProgressIndicator(),
+  activeBuilder: (context, value) => Text('Current: $value'),
+  doneBuilder: (context, value) => Text('Finished at $value'),
+);
+
+// Every event emitted so far (data and errors), via AggregatedStreamBuilder
+stream.pipeAggregated(
+  (context, events, connectionState) => Column(
+    children: [
+      for (final event in events)
+        Text(event.hasError ? 'Error: ${event.error}' : 'Value: ${event.data}'),
+    ],
+  ),
+);
+```
+
 ### 8. Automatic disposing of resources and notifiers
 
 By adding the `ManagedListenerMixin` you can automatically dispose resource or notifiers by wrapping them in `manage` or automatically remove listeners
@@ -280,6 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen> with ManagedListenerMixin
   void initState() {
     super.initState();
     addListener(widget.otherNotifier, () {/* Do something */}); //The listener is automatically removed when the widget disposes
+    listen(someStream, onData: (event) {/* Do something */}); // The subscription is automatically canceled when the widget disposes
   }
 
   Future<Map<String, dynamic>> fetchProfile() async {
@@ -297,6 +331,8 @@ class _ProfileScreenState extends State<ProfileScreen> with ManagedListenerMixin
   }
 }
 ```
+
+If something needs to be released before the widget is disposed, use `disposeEarly(notifier)`, `disposeAnimationEarly(controller)` or `cancelEarly(subscription)`; they release it immediately and stop tracking it.
 
 The library also includes `pipeChild` helpers for reusing a static child widget while only rebuilding the dynamic portion of the UI.
 
