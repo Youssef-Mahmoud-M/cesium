@@ -21,6 +21,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
   /// Build query parameters for the given `page` index.
   final Map<String, dynamic> Function(int page) queryParamatersBuilder;
   int _page;
+  int _latestRequestId = 0;
 
   /// Whether the pagination has reached the end based on `getMaxPages`.
   bool get reachedEnd {
@@ -37,6 +38,7 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
     this.transform,
     this.queryParamatersBuilder, {
     super.dependecies = const [],
+    super.urgentDependecies = const [],
     super.debounceDuration,
     super.headers = const {},
     super.maxRetryAttempts,
@@ -57,24 +59,40 @@ class PaginatedHttpResource<T> extends HttpResourceBase<List<T>> {
     runRequest();
   }
 
+  void _resetPage() {
+    _page = _beginningPage;
+    // Requests already in flight must not advance the page after this reset
+    _latestRequestId++;
+  }
+
   @override
   void reload() {
-    _page = _beginningPage;
+    _resetPage();
     super.reload();
   }
 
   @override
+  void urgentReload() {
+    _resetPage();
+    super.urgentReload();
+  }
+
+  @override
   Future<List<T>> makeRequest() async {
+    final requestId = ++_latestRequestId;
+    final page = _page;
     final response = await makeHttpRequest(
-      urlBuilder(_page),
-      queryParamatersBuilder(_page),
+      urlBuilder(page),
+      queryParamatersBuilder(page),
     );
 
     final newResult = [
-      if (result != null) ...result!,
+      if (page != _beginningPage && result != null) ...result!,
       transform(response.data),
     ];
-    _page++;
+    if (requestId == _latestRequestId) {
+      _page = page + 1;
+    }
     return newResult;
   }
 

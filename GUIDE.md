@@ -14,6 +14,7 @@ HttpResource<T>(
   T Function(dynamic data) transform, {
     Map<String, dynamic> Function()? queryParametersBuilder,
     Iterable<Listenable> dependecies = const [],
+    Iterable<Listenable> urgentDependecies = const [],
     Duration? debounceDuration,
     Map<String, dynamic> headers = const {},
     int maxRetryAttempts = 0,
@@ -26,6 +27,7 @@ PaginatedHttpResource<T>(
   Map<String, dynamic> Function(int page) queryParamatersBuilder, {
     int Function(T)? getMaxPages,
     Iterable<Listenable> dependecies = const [],
+    Iterable<Listenable> urgentDependecies = const [],
     Duration? debounceDuration,
     Map<String, dynamic> headers = const {},
     int maxRetryAttempts = 0,
@@ -37,6 +39,7 @@ PaginatedHttpResource<T>(
 Common optional paramaters:
 
 - `Iterable<Listenable> dependecies`: When one of the dependencies notifies the http resource, it auto reruns `urlBuilder` and the query builder and then reruns the http request.
+- `Iterable<Listenable> urgentDependecies`: Same as `dependecies`, but reloads immediately and ignores `debounceDuration`. Use it for changes that should show right away, such as a filter toggle on a resource that debounces its search text.
 - `Duration? debounceDuration`: Debounces reloads when dependencies update, so a `TextEditingController` can trigger a reload only after the configured idle period.
 - `Map<String, dynamic> headers`: Custom request headers.
 - `int maxRetryAttempts`: Maximum retry count on failure.
@@ -45,9 +48,11 @@ Common optional paramaters:
 
 - `int Function(T)? getMaxPages` takes the response data and returns the total number of pages available. This is recommended so that the resource automatically stops pagination at the correct page and prevents unnecessary requests
 
-- `int startPage` determines which page to start from and to reset to when reload is called on the resource or when one of the dependencies change
+- `int startPage` determines which page to start from and to reset to when `reload` or `urgentReload` is called on the resource or when one of the dependencies change
 
-Both resources expose a `reload` function which reloads the request and resets the page for `PaginatedHttpResource`
+Both resources expose a `reload` function which reloads the request. For `PaginatedHttpResource` it also resets the page, and the loaded pages are replaced once the first page arrives
+
+Both resources also expose an `urgentReload` function which does the same as `reload` but ignores `debounceDuration`, starts the request immediately and cancels any pending debounced request. Use it for explicit user actions such as submitting a search or pull to refresh, where waiting for the debounce would feel slow
 
 `PaginatedHttpResource` exposes a `loadMore` function that loads the next page if there is one
 

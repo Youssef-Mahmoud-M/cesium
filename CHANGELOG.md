@@ -78,3 +78,11 @@ Initial release with the following features:
 - Added `listen` to `ManagedListenerMixin` to auto-cancel stream subscriptions on dispose
 - Added `disposeEarly`, `disposeAnimationEarly` and `cancelEarly` to `ManagedListenerMixin` to release managed objects before disposal
 - Added `factory` getter to `ServiceProvider`
+
+## 2.3.0
+
+- Added `urgentReload` to `HttpResource` and `PaginatedHttpResource` to reload immediately, ignoring `debounceDuration`
+- Added `urgentDependecies` to `HttpResource`, `PaginatedHttpResource` and their `ManagedListenerMixin` helpers to trigger `urgentReload` when a dependency notifies
+- Fixed `PaginatedHttpResource` appending to the old pages on reload, it now replaces them once the first page arrives
+- Fixed `PaginatedHttpResource` skipping a page when a request was cancelled while in flight
+- Fixed a pending debounced request still running after a request was started without debounce

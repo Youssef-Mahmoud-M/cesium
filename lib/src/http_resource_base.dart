@@ -18,6 +18,7 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
   final CesiumHttpService httpService = cesiumHttpServiceProvider.inject();
 
   final Iterable<Listenable> _dependecies;
+  final Iterable<Listenable> _urgentDependecies;
 
   /// Optional duration to debounce repeated `runRequest` calls.
   final Duration? debounceDuration;
@@ -31,21 +32,28 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
 
   /// Create a base HTTP resource.
   ///
-  /// `dependecies` are listened to and will trigger reloads when they
-  /// notify. `perserveResults` controls whether previous results are
+  /// `dependecies` are listened to and will trigger [reload] when they
+  /// notify. `urgentDependecies` are listened to and will trigger
+  /// [urgentReload] when they notify, ignoring `debounceDuration`.
+  /// `perserveResults` controls whether previous results are
   /// kept while a new request runs. `maxRetryAttempts` is the max
   /// number of times it will reattempt the request
   HttpResourceBase({
     Iterable<Listenable> dependecies = const [],
+    Iterable<Listenable> urgentDependecies = const [],
     this.debounceDuration,
     this.headers = const {},
     bool perserveResults = false,
     this.maxRetryAttempts = 0,
   }) : _dependecies = dependecies,
+       _urgentDependecies = urgentDependecies,
        super(perserveResult: perserveResults) {
     runRequest(useDebounce: false);
     for (var dependency in _dependecies) {
       dependency.addListener(reload);
+    }
+    for (var dependency in _urgentDependecies) {
+      dependency.addListener(urgentReload);
     }
     retryOnError = (error, attempt) {
       if (attempt <= maxRetryAttempts) {
@@ -64,19 +72,29 @@ abstract class HttpResourceBase<T> extends FutureResource<T> {
     for (var dependency in _dependecies) {
       dependency.removeListener(reload);
     }
+    for (var dependency in _urgentDependecies) {
+      dependency.removeListener(urgentReload);
+    }
     _debounceTimer?.cancel();
     progressNotifier.dispose();
   }
 
   /// Trigger a reload of the resource, honoring debounce settings.
   void reload() {
-    runRequest();
+    runRequest(useDebounce: true);
+  }
+
+  /// Same as [reload] but ignores [debounceDuration] and starts the request
+  /// immediately.
+  void urgentReload() {
+    runRequest(useDebounce: false);
   }
 
   /// Trigger a request immediately or after the configured debounce
-  /// duration.
+  /// duration. An immediate request cancels any pending debounced one.
   void runRequest({bool useDebounce = true}) {
     if (!useDebounce || debounceDuration == null) {
+      _debounceTimer?.cancel();
       progressNotifier.value = 0;
       runNewFuture(() => makeRequest());
       return;

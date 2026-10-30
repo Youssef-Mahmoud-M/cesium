@@ -25,6 +25,7 @@ class HttpResource<T> extends HttpResourceBase<T> {
     this.transform, {
     this.queryParametersBuilder,
     super.dependecies = const [],
+    super.urgentDependecies = const [],
     super.debounceDuration,
     super.headers = const {},
     super.maxRetryAttempts,

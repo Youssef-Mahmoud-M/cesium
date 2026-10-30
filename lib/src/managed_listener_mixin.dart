@@ -247,6 +247,7 @@ mixin ManagedListenerMixin<W extends StatefulWidget> on State<W> {
     T Function(dynamic data) transform, {
     Map<String, dynamic> Function()? queryParametersBuilder,
     Iterable<Listenable> dependecies = const [],
+    Iterable<Listenable> urgentDependecies = const [],
     Duration? debounceDuration,
     Map<String, String> headers = const {},
     int maxRetryAttempts = 0,
@@ -257,6 +258,7 @@ mixin ManagedListenerMixin<W extends StatefulWidget> on State<W> {
         transform,
         queryParametersBuilder: queryParametersBuilder,
         dependecies: dependecies,
+        urgentDependecies: urgentDependecies,
         debounceDuration: debounceDuration,
         headers: headers,
         maxRetryAttempts: maxRetryAttempts,
@@ -270,6 +272,7 @@ mixin ManagedListenerMixin<W extends StatefulWidget> on State<W> {
     T Function(dynamic data) transform,
     Map<String, dynamic> Function(int page) queryParamatersBuilder, {
     Iterable<Listenable> dependecies = const [],
+    Iterable<Listenable> urgentDependecies = const [],
     Duration? debounceDuration,
     Map<String, String> headers = const {},
     int maxRetryAttempts = 0,
@@ -282,6 +285,7 @@ mixin ManagedListenerMixin<W extends StatefulWidget> on State<W> {
         transform,
         queryParamatersBuilder,
         dependecies: dependecies,
+        urgentDependecies: urgentDependecies,
         debounceDuration: debounceDuration,
         headers: headers,
         maxRetryAttempts: maxRetryAttempts,
